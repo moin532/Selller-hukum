@@ -100,7 +100,7 @@ export function mediaAbsoluteUrl(pathOrUrl) {
     ? fromEnv || "http://127.0.0.1:4000"
     : fromEnv && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv)
       ? fromEnv
-      : "https://api.hukum-ksa.com";
+      : "https://seller.hukum-ksa.com";
   const storefront =
     (process.env.NEXT_PUBLIC_STOREFRONT_URL || process.env.NEXT_PUBLIC_MARKETPLACE_URL || "")
       .trim()

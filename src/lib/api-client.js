@@ -1,10 +1,10 @@
 import { clearSellerSession, getSellerToken } from "@/lib/session";
 
 /** Live Hukum Backend API for Cloudhost / client browsers. */
-export const PRODUCTION_API_URL = "https://api.hukum-ksa.com";
+export const PRODUCTION_API_URL = "https://seller.hukum-ksa.com";
 
 /**
- * Always call https://api.hukum-ksa.com from browser (localhost, Cloudhost, client PC).
+ * Always call https://seller.hukum-ksa.com from browser (localhost, Cloudhost, client PC).
  * Local Backend only when NEXT_PUBLIC_USE_LOCAL_API=1.
  */
 function resolveApiBase() {
