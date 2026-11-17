@@ -28,10 +28,20 @@ export function localized(obj, fallback = "") {
 }
 
 function apiBase() {
-  const fromEnv = (process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/$/, "");
-  if (fromEnv && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv)) return fromEnv;
-  if (process.env.NEXT_PUBLIC_USE_LOCAL_API === "1") return fromEnv || "http://127.0.0.1:4000";
-  return (process.env.NEXT_PUBLIC_HUKUM_API_URL || "https://api.hukum-ksa.com").replace(/\/$/, "");
+  if (process.env.NEXT_PUBLIC_USE_LOCAL_API === "1") {
+    return (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4000").replace(/\/$/, "");
+  }
+  const fromEnv = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_HUKUM_API_URL || "")
+    .trim()
+    .replace(/\/$/, "");
+  if (
+    fromEnv &&
+    !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv) &&
+    !/api\.hukum-ksa\.com$/i.test(fromEnv.replace(/^https?:\/\//, "").split("/")[0])
+  ) {
+    return fromEnv;
+  }
+  return "https://seller.hukum-ksa.com";
 }
 
 /** Marketplace origin for static /categories/*.jpg (seller panel does not host those assets). */

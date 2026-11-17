@@ -92,14 +92,17 @@ export function mediaAbsoluteUrl(pathOrUrl) {
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
 
   const path = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
-  const fromEnv = (process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/$/, "");
   const useLocal = process.env.NEXT_PUBLIC_USE_LOCAL_API === "1";
-  const apiBase =
-    fromEnv && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv)
+  const fromEnv = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_HUKUM_API_URL || "")
+    .trim()
+    .replace(/\/$/, "");
+  const apiBase = useLocal
+    ? fromEnv || "http://127.0.0.1:4000"
+    : fromEnv &&
+        !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv) &&
+        !/api\.hukum-ksa\.com$/i.test(fromEnv.replace(/^https?:\/\//, "").split("/")[0])
       ? fromEnv
-      : useLocal
-        ? fromEnv || "http://127.0.0.1:4000"
-        : (process.env.NEXT_PUBLIC_HUKUM_API_URL || "https://api.hukum-ksa.com").replace(/\/$/, "");
+      : "https://seller.hukum-ksa.com";
   const storefront =
     (process.env.NEXT_PUBLIC_STOREFRONT_URL || process.env.NEXT_PUBLIC_MARKETPLACE_URL || "")
       .trim()

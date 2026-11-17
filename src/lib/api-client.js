@@ -1,29 +1,39 @@
 import { clearSellerSession, getSellerToken } from "@/lib/session";
 
-/** Live Hukum Backend API — always used on Cloudhost / client machines. */
-export const PRODUCTION_API_URL = "https://api.hukum-ksa.com";
+/**
+ * Live Hukum API.
+ * Use seller.hukum-ksa.com (nginx → Backend). api.hukum-ksa.com often fails DNS on hosts/Cloudflare.
+ */
+export const PRODUCTION_API_URL = "https://seller.hukum-ksa.com";
 
 /**
- * Resolve API origin.
- * Default: production API (so Cloudhost / client PCs never call 127.0.0.1).
- * Local Backend only when NEXT_PUBLIC_USE_LOCAL_API=1 or NEXT_PUBLIC_API_URL is set.
+ * Always call the live Hukum API from browser (localhost, Cloudhost, client PC).
+ * Local Backend only when NEXT_PUBLIC_USE_LOCAL_API=1.
  */
 function resolveApiBase() {
-  const fromEnv = (process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/$/, "");
-  if (fromEnv && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv)) {
-    return fromEnv;
-  }
-
   const useLocal =
     process.env.NEXT_PUBLIC_USE_LOCAL_API === "1" ||
     process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
 
   if (useLocal) {
-    return (fromEnv || "http://127.0.0.1:4000").replace(/\/$/, "");
+    const local = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4000").trim().replace(/\/$/, "");
+    return local || "http://127.0.0.1:4000";
   }
 
-  // Production / Cloudhost / any remote client → live Hukum API
-  return (process.env.NEXT_PUBLIC_HUKUM_API_URL || PRODUCTION_API_URL).replace(/\/$/, "");
+  const fromEnv = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_HUKUM_API_URL || "")
+    .trim()
+    .replace(/\/$/, "");
+
+  // Ignore empty / localhost env leftovers so Cloudhost & localhost never hit 127.0.0.1
+  if (
+    fromEnv &&
+    !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv) &&
+    !/api\.hukum-ksa\.com$/i.test(fromEnv.replace(/^https?:\/\//, "").split("/")[0])
+  ) {
+    return fromEnv;
+  }
+
+  return PRODUCTION_API_URL;
 }
 
 export function apiUrl(path) {
