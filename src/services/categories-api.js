@@ -29,12 +29,9 @@ export function localized(obj, fallback = "") {
 
 function apiBase() {
   const fromEnv = (process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/$/, "");
-  if (fromEnv) return fromEnv;
-  if (typeof window !== "undefined") return ""; // same-origin /api (Cloudhost rewrite or nginx)
-  if (process.env.NODE_ENV === "production") {
-    return (process.env.HUKUM_API_URL || "https://api.hukum-ksa.com").replace(/\/$/, "");
-  }
-  return "http://127.0.0.1:4000";
+  if (fromEnv && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv)) return fromEnv;
+  if (process.env.NEXT_PUBLIC_USE_LOCAL_API === "1") return fromEnv || "http://127.0.0.1:4000";
+  return (process.env.NEXT_PUBLIC_HUKUM_API_URL || "https://api.hukum-ksa.com").replace(/\/$/, "");
 }
 
 /** Marketplace origin for static /categories/*.jpg (seller panel does not host those assets). */

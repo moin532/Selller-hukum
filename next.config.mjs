@@ -1,13 +1,20 @@
 /** @type {import('next').NextConfig} */
-const prodApi =
-  (process.env.HUKUM_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://api.hukum-ksa.com")
+const raw =
+  (process.env.HUKUM_API_URL ||
+    process.env.NEXT_PUBLIC_HUKUM_API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://api.hukum-ksa.com")
     .trim()
-    .replace(/\/$/, "") || "https://api.hukum-ksa.com";
+    .replace(/\/$/, "");
+
+const prodApi =
+  !raw || /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(raw)
+    ? "https://api.hukum-ksa.com"
+    : raw;
 
 /**
- * Cloudhost / any host without nginx /api proxy:
- * browser calls same-origin `/api/*`, Next rewrites to production Hukum API.
- * On seller.hukum-ksa.com nginx already proxies /api → Backend (rewrite unused).
+ * Optional same-origin /api proxy → production Hukum API.
+ * Browser also calls https://api.hukum-ksa.com directly by default.
  */
 const nextConfig = {
   async rewrites() {

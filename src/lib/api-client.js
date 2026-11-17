@@ -1,33 +1,29 @@
 import { clearSellerSession, getSellerToken } from "@/lib/session";
 
-/** Live Hukum Backend API (Cloudhost / production). */
+/** Live Hukum Backend API — always used on Cloudhost / client machines. */
 export const PRODUCTION_API_URL = "https://api.hukum-ksa.com";
 
 /**
- * Resolve API origin:
- * - NEXT_PUBLIC_API_URL if set (local Backend override)
- * - Browser: same-origin "" so Cloudhost uses Next rewrite → production API
- * - On hukum-ksa.com seller host: same-origin "" (nginx → Backend)
- * - Server / production SSR: production API
- * - Local SSR: Backend :4000
+ * Resolve API origin.
+ * Default: production API (so Cloudhost / client PCs never call 127.0.0.1).
+ * Local Backend only when NEXT_PUBLIC_USE_LOCAL_API=1 or NEXT_PUBLIC_API_URL is set.
  */
 function resolveApiBase() {
   const fromEnv = (process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/$/, "");
-  if (fromEnv) return fromEnv;
-
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname || "";
-    if (host === "localhost" || host === "127.0.0.1") {
-      return "http://127.0.0.1:4000";
-    }
-    // Cloudhost + seller.hukum-ksa.com: same-origin /api (rewrite or nginx)
-    return "";
+  if (fromEnv && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv)) {
+    return fromEnv;
   }
 
-  if (process.env.NODE_ENV === "production") {
-    return (process.env.HUKUM_API_URL || PRODUCTION_API_URL).replace(/\/$/, "");
+  const useLocal =
+    process.env.NEXT_PUBLIC_USE_LOCAL_API === "1" ||
+    process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
+
+  if (useLocal) {
+    return (fromEnv || "http://127.0.0.1:4000").replace(/\/$/, "");
   }
-  return "http://127.0.0.1:4000";
+
+  // Production / Cloudhost / any remote client → live Hukum API
+  return (process.env.NEXT_PUBLIC_HUKUM_API_URL || PRODUCTION_API_URL).replace(/\/$/, "");
 }
 
 export function apiUrl(path) {
@@ -52,7 +48,7 @@ export async function apiFetch(path, options = {}) {
       res: null,
       json: {
         success: false,
-        message: `Cannot reach API at ${apiUrl(path)}. Check HUKUM_API_URL / NEXT_PUBLIC_API_URL.`,
+        message: `Cannot reach Hukum API at ${apiUrl(path)}. Check your connection.`,
         data: null,
       },
       status: 0,
@@ -97,7 +93,7 @@ export async function apiDownload(path, filename = "download") {
   try {
     res = await fetch(apiUrl(path), { method: "GET", headers, credentials: "include" });
   } catch {
-    throw new Error(`Cannot reach API at ${apiUrl(path)}`);
+    throw new Error(`Cannot reach Hukum API at ${apiUrl(path)}`);
   }
 
   if (res.status === 401) {

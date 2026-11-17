@@ -92,19 +92,21 @@ export function mediaAbsoluteUrl(pathOrUrl) {
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
 
   const path = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
-  const apiBase = (process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/$/, "");
+  const fromEnv = (process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/$/, "");
+  const useLocal = process.env.NEXT_PUBLIC_USE_LOCAL_API === "1";
+  const apiBase =
+    fromEnv && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv)
+      ? fromEnv
+      : useLocal
+        ? fromEnv || "http://127.0.0.1:4000"
+        : (process.env.NEXT_PUBLIC_HUKUM_API_URL || "https://api.hukum-ksa.com").replace(/\/$/, "");
   const storefront =
     (process.env.NEXT_PUBLIC_STOREFRONT_URL || process.env.NEXT_PUBLIC_MARKETPLACE_URL || "")
       .trim()
       .replace(/\/$/, "") || "https://hukum-ksa.com";
-  const prodApi =
-    (process.env.HUKUM_API_URL || "").trim().replace(/\/$/, "") || "https://api.hukum-ksa.com";
 
   if (path.startsWith("/api/media") || path.startsWith("/api/")) {
-    if (apiBase) return `${apiBase}${path}`;
-    if (typeof window !== "undefined") return path; // same-origin → Next rewrite / nginx
-    if (process.env.NODE_ENV === "production") return `${prodApi}${path}`;
-    return `http://127.0.0.1:4000${path}`;
+    return `${apiBase}${path}`;
   }
 
   if (
@@ -117,8 +119,5 @@ export function mediaAbsoluteUrl(pathOrUrl) {
     return `${storefront}${path}`;
   }
 
-  if (apiBase) return `${apiBase}${path}`;
-  if (typeof window !== "undefined") return path;
-  if (process.env.NODE_ENV === "production") return `${prodApi}${path}`;
-  return `http://127.0.0.1:4000${path}`;
+  return `${apiBase}${path}`;
 }
