@@ -1,13 +1,10 @@
 import { clearSellerSession, getSellerToken } from "@/lib/session";
 
-/**
- * Live Hukum API.
- * Use seller.hukum-ksa.com (nginx → Backend). api.hukum-ksa.com often fails DNS on hosts/Cloudflare.
- */
-export const PRODUCTION_API_URL = "https://seller.hukum-ksa.com";
+/** Live Hukum Backend API for Cloudhost / client browsers. */
+export const PRODUCTION_API_URL = "https://api.hukum-ksa.com";
 
 /**
- * Always call the live Hukum API from browser (localhost, Cloudhost, client PC).
+ * Always call https://api.hukum-ksa.com from browser (localhost, Cloudhost, client PC).
  * Local Backend only when NEXT_PUBLIC_USE_LOCAL_API=1.
  */
 function resolveApiBase() {
@@ -24,12 +21,8 @@ function resolveApiBase() {
     .trim()
     .replace(/\/$/, "");
 
-  // Ignore empty / localhost env leftovers so Cloudhost & localhost never hit 127.0.0.1
-  if (
-    fromEnv &&
-    !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv) &&
-    !/api\.hukum-ksa\.com$/i.test(fromEnv.replace(/^https?:\/\//, "").split("/")[0])
-  ) {
+  // Ignore empty / localhost leftovers
+  if (fromEnv && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv)) {
     return fromEnv;
   }
 

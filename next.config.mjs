@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 /**
- * Local /api proxy → Backend on this machine (avoids broken api.hukum-ksa.com DNS).
- * Browser calls https://seller.hukum-ksa.com directly via api-client.js.
+ * Same-origin /api rewrite → Backend on this machine.
+ * Browsers call https://api.hukum-ksa.com via api-client.js.
  */
 const nextConfig = {
   async rewrites() {

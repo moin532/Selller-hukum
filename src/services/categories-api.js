@@ -34,14 +34,10 @@ function apiBase() {
   const fromEnv = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_HUKUM_API_URL || "")
     .trim()
     .replace(/\/$/, "");
-  if (
-    fromEnv &&
-    !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv) &&
-    !/api\.hukum-ksa\.com$/i.test(fromEnv.replace(/^https?:\/\//, "").split("/")[0])
-  ) {
+  if (fromEnv && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv)) {
     return fromEnv;
   }
-  return "https://seller.hukum-ksa.com";
+  return "https://api.hukum-ksa.com";
 }
 
 /** Marketplace origin for static /categories/*.jpg (seller panel does not host those assets). */

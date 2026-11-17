@@ -98,11 +98,9 @@ export function mediaAbsoluteUrl(pathOrUrl) {
     .replace(/\/$/, "");
   const apiBase = useLocal
     ? fromEnv || "http://127.0.0.1:4000"
-    : fromEnv &&
-        !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv) &&
-        !/api\.hukum-ksa\.com$/i.test(fromEnv.replace(/^https?:\/\//, "").split("/")[0])
+    : fromEnv && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv)
       ? fromEnv
-      : "https://seller.hukum-ksa.com";
+      : "https://api.hukum-ksa.com";
   const storefront =
     (process.env.NEXT_PUBLIC_STOREFRONT_URL || process.env.NEXT_PUBLIC_MARKETPLACE_URL || "")
       .trim()
