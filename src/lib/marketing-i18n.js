@@ -56,10 +56,10 @@ export const COPY = {
     footerTerms: "Terms",
     footerPrivacy: "Privacy Policy",
     loginTitle: "Seller sign in",
-    loginSubtitle: "Use your seller email and password. OTP is not used by the current API.",
+    loginSubtitle: "Sign in with your seller business email and password.",
     forgot: "Forgot password?",
     createAccount: "Create a seller account",
-    noOtpNote: "Authentication is email + password (existing /api/auth). No OTP endpoint is available.",
+    noOtpNote: "Sign in with email and password.",
   },
   ar: {
     brand: "حكوم",
@@ -117,10 +117,10 @@ export const COPY = {
     footerTerms: "الشروط",
     footerPrivacy: "سياسة الخصوصية",
     loginTitle: "تسجيل دخول المورّد",
-    loginSubtitle: "استخدم البريد وكلمة المرور. واجهة البرمجة الحالية لا تستخدم رمز OTP.",
+    loginSubtitle: "سجّل الدخول ببريد المورّد الإلكتروني وكلمة المرور.",
     forgot: "نسيت كلمة المرور؟",
     createAccount: "إنشاء حساب مورّد",
-    noOtpNote: "المصادقة عبر البريد وكلمة المرور (/api/auth). لا تتوفر نقطة OTP حالياً.",
+    noOtpNote: "سجّل الدخول بالبريد وكلمة المرور.",
   },
 };
 

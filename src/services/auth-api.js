@@ -2,9 +2,25 @@ import { apiGet, apiPost } from "@/lib/api-client";
 import { clearSellerSession, isSellerAccount, setSellerSession } from "@/lib/session";
 // apiGet used after login to repair missing vendorId
 
+function sellerGateError(user) {
+  const roles = (user?.roles || []).map((r) => String(r).toLowerCase());
+  const isStaff = roles.some((r) =>
+    ["admin", "super_admin", "vendor_verification_admin", "content_admin", "ops_admin"].includes(r)
+  );
+  const isBuyer = roles.includes("buyer") || roles.some((r) => r.startsWith("buyer_"));
+
+  if (isStaff) {
+    return "This is a staff/admin account. Sign in here with a seller email (for example seller@hukum-ksa.com), or open the admin panel for staff access.";
+  }
+  if (isBuyer) {
+    return "This is a buyer account. Use a seller email and password here, or create a seller account.";
+  }
+  return "This email is not registered as a seller. Use your seller login, or create a seller account.";
+}
+
 function persistSession(user, token) {
   if (!isSellerAccount(user)) {
-    throw new Error("This account is not a seller account. Use a vendor login.");
+    throw new Error(sellerGateError(user));
   }
   setSellerSession(
     {
