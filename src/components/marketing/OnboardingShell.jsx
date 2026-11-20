@@ -45,7 +45,7 @@ export function OnboardingShell({ title, children }) {
             );
           })}
         </ol>
-        <div className="mt-6 rounded-xl border border-border bg-card p-5">{children}</div>
+        <div className="card mt-6 p-5 sm:p-6">{children}</div>
       </div>
     </MarketingShell>
   );

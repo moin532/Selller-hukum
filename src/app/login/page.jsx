@@ -2,7 +2,9 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
+import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { t } from "@/lib/marketing-i18n";
 import { loginSeller } from "@/services/auth-api";
@@ -33,73 +35,70 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-bg px-5 py-10">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-md rounded-[1.5rem] border border-border bg-card p-8 shadow-[0_24px_60px_-28px_rgba(16,37,28,0.28)]"
-      >
-        <div className="mb-7 flex flex-col items-center gap-3 text-center">
-          <img
-            src="/brand/hukum-logo.png"
+    <MarketingShell>
+      <div className="mx-auto max-w-md px-4 py-8 md:py-14">
+        <div className="card p-6 shadow-lg sm:p-8">
+          <Image
+            src="/brand/hukum-calligraphy.png"
             alt="Hukum"
-            width={56}
-            height={56}
-            className="h-14 w-14 rounded-2xl object-contain"
+            width={140}
+            height={48}
+            className="mx-auto mb-4 h-12 w-auto object-contain"
+            priority
           />
-          <p className="m-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-gold">
-            {t(lang, "brand")}
-          </p>
-          <h1 className="m-0 text-[1.35rem] font-semibold tracking-[-0.03em] text-text">
-            {t(lang, "loginTitle")}
-          </h1>
-          <p className="m-0 text-[13px] text-muted">{t(lang, "loginSubtitle")}</p>
+          <h1 className="m-0 text-center text-2xl font-semibold">{t(lang, "loginTitle")}</h1>
+          <p className="mt-1.5 mb-0 text-center text-sm text-muted">{t(lang, "loginSubtitle")}</p>
+
+          <form onSubmit={onSubmit} className="mt-5 space-y-4">
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+              {t(lang, "fieldEmail")}
+              <input
+                className="input-field mt-1.5"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="username"
+                dir="ltr"
+              />
+            </label>
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+              {t(lang, "fieldPassword")}
+              <input
+                className="input-field mt-1.5"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                dir="ltr"
+              />
+            </label>
+
+            {error ? (
+              <p role="alert" className="m-0 text-sm text-danger">
+                {error}
+              </p>
+            ) : null}
+
+            <button type="submit" className="btn-primary w-full py-3" disabled={busy}>
+              {busy ? "…" : t(lang, "navLogin")}
+            </button>
+
+            <p className="m-0 text-center text-sm">
+              <Link href="/forgot-password" className="font-medium text-gold hover:underline">
+                {t(lang, "forgot")}
+              </Link>
+            </p>
+            <p className="m-0 border-t border-border pt-4 text-center text-sm text-muted">
+              <Link href="/register" className="font-medium text-gold hover:underline">
+                {t(lang, "createAccount")}
+              </Link>
+            </p>
+          </form>
         </div>
-
-        <label className="mt-1 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-          {t(lang, "fieldEmail")}
-          <input
-            className="mt-1.5 h-11 w-full rounded-[0.9rem] border border-border bg-input px-3.5 text-[13px] text-text outline-none transition focus:border-gold/40 focus:bg-white focus:ring-4 focus:ring-gold/10"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="username"
-          />
-        </label>
-        <label className="mt-4 block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-          {t(lang, "fieldPassword")}
-          <input
-            className="mt-1.5 h-11 w-full rounded-[0.9rem] border border-border bg-input px-3.5 text-[13px] text-text outline-none transition focus:border-gold/40 focus:bg-white focus:ring-4 focus:ring-gold/10"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
-        </label>
-
-        {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
-
-        <button
-          type="submit"
-          className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-full bg-gold text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-gold-hover disabled:opacity-60"
-          disabled={busy}
-        >
-          {busy ? "…" : t(lang, "navLogin")}
-        </button>
-
-        <p className="mt-4 text-center text-sm text-muted">
-          <Link href="/forgot-password" className="font-medium text-gold hover:underline">
-            {t(lang, "forgot")}
-          </Link>
-        </p>
-        <p className="mt-2 text-center text-sm text-muted">
-          <Link href="/register" className="font-medium text-gold hover:underline">
-            {t(lang, "createAccount")}
-          </Link>
-        </p>
-      </form>
-    </div>
+      </div>
+    </MarketingShell>
   );
 }
 

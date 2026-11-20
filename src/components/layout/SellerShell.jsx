@@ -14,6 +14,7 @@ import { VerificationWaitingBanner } from "@/components/ui/VerificationWaitingBa
 import { apiGet } from "@/lib/api-client";
 import { playNotifySound } from "@/lib/notify-sound";
 
+/** UI shell styled to match the Hukum supplier redesign — same nav + APIs as before. */
 export function SellerShell({ title, children }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -87,12 +88,18 @@ export function SellerShell({ title, children }) {
     router.replace("/login");
   }
 
+  const company =
+    vendor?.tradeName ||
+    vendor?.legalName?.[lang] ||
+    vendor?.legalName?.en ||
+    "";
+
   return (
     <div className="relative flex min-h-dvh bg-bg text-text">
       {open ? (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-[#101719]/40 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
           aria-label="Close menu"
           onClick={() => setOpen(false)}
         />
@@ -100,31 +107,25 @@ export function SellerShell({ title, children }) {
 
       <aside
         className={cn(
-          "fixed inset-y-0 start-0 z-50 flex h-dvh w-[min(18rem,92vw)] flex-col border-e border-border bg-sidebar shadow-[0_24px_60px_-28px_rgba(16,37,28,0.28)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:w-[240px] lg:translate-x-0 lg:shadow-none",
-          open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "ws-sidebar fixed inset-y-0 start-0 z-50 flex h-dvh w-[min(17rem,88vw)] flex-col transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:w-[248px] lg:translate-x-0",
+          open ? "translate-x-0" : "ltr:-translate-x-full rtl:translate-x-full lg:ltr:translate-x-0 lg:rtl:translate-x-0"
         )}
+        aria-label="Main menu"
       >
-        <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-4">
-          <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex items-start justify-between gap-2 px-3 pt-5">
+          <Link href="/dashboard" className="ws-brand min-w-0 flex-1" onClick={() => setOpen(false)}>
             <img
-              src="/brand/hukum-logo.png"
+              src="/brand/hukum-calligraphy.png"
               alt="Hukum"
-              width={36}
-              height={36}
-              className="h-9 w-9 shrink-0 rounded-xl object-contain"
+              width={72}
+              height={44}
             />
-            <div className="min-w-0">
-              <p className="m-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-gold">
-                Hukum
-              </p>
-              <p className="m-0 truncate text-sm font-semibold tracking-[-0.02em]">
-                {lang === "ar" ? "لوحة البائع" : "Seller Admin"}
-              </p>
-            </div>
-          </div>
+            <p className="ws-brand__role">{lang === "ar" ? "مساحة المورد" : "Supplier workspace"}</p>
+            {company ? <p className="ws-brand__company truncate">{company}</p> : null}
+          </Link>
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border text-muted lg:hidden"
+            className="btn-icon lg:hidden"
             onClick={() => setOpen(false)}
             aria-label="Close"
           >
@@ -132,43 +133,44 @@ export function SellerShell({ title, children }) {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {SELLER_NAV.map((item) => {
-            const Icon = item.icon;
-            const active =
-              pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={cn(
-                  "mb-0.5 flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-[13px] font-medium transition-colors",
-                  active
-                    ? "bg-gold-muted text-gold"
-                    : "text-muted hover:bg-[#17232b]/[0.035] hover:text-text"
-                )}
-              >
-                <Icon size={16} className="shrink-0" />
-                <span className="truncate">{lang === "ar" ? item.labelAr : item.label}</span>
-              </Link>
-            );
-          })}
+        <nav className="ws-nav flex-1 overflow-y-auto px-3 py-2">
+          <div className="ws-group flex flex-col gap-0.5">
+            {SELLER_NAV.map((item) => {
+              const Icon = item.icon;
+              const active =
+                pathname === item.href ||
+                (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={active ? "page" : undefined}
+                  className="ws-item"
+                >
+                  <span className="ws-item__icon">
+                    <Icon size={20} strokeWidth={1.8} aria-hidden />
+                  </span>
+                  <span className="truncate">{lang === "ar" ? item.labelAr : item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
-        <div className="border-t border-border p-3 text-xs text-muted">{user?.email || "—"}</div>
+        <div className="border-t border-border px-3 py-3 text-xs text-muted">{user?.email || "—"}</div>
       </aside>
 
-      <div className="flex min-h-dvh w-full min-w-0 flex-1 flex-col lg:ms-[240px]">
-        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur-md md:px-6">
-          <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-h-dvh w-full min-w-0 flex-1 flex-col lg:ms-[248px]">
+        <header className="ws-topbar flex items-center justify-between gap-3 px-4 py-2.5 md:px-6">
+          <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface lg:hidden"
+              className="btn-icon lg:hidden"
               onClick={() => setOpen(true)}
               aria-label="Menu"
             >
-              <Menu size={18} />
+              <Menu size={20} />
             </button>
             <div className="min-w-0">
               <p className="m-0 truncate text-[15px] font-semibold tracking-[-0.02em]">{title}</p>
@@ -176,48 +178,43 @@ export function SellerShell({ title, children }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               type="button"
-              className="inline-flex h-10 items-center justify-center rounded-full border border-border px-3 text-xs font-semibold text-text"
+              className="ws-chip"
               onClick={() => setLang(lang === "ar" ? "en" : "ar")}
             >
               {lang === "ar" ? "EN" : "عربي"}
             </button>
             <button
               type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface"
+              className="ws-chip"
               aria-label="Toggle theme"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             <Link
               href="/dashboard/notifications"
-              className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface transition hover:border-gold/40 hover:text-gold"
+              className="ws-chip"
               aria-label="Notifications"
               title="Notifications"
             >
-              <Bell size={16} />
+              <Bell size={18} />
+              <span className="hidden sm:inline">{lang === "ar" ? "التنبيهات" : "Alerts"}</span>
               {unread > 0 ? (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-bold text-white">
-                  {unread > 9 ? "9+" : unread}
-                </span>
+                <span className="ws-chip__badge">{unread > 9 ? "9+" : unread}</span>
               ) : null}
             </Link>
-            <button
-              type="button"
-              className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border px-3 text-xs font-semibold"
-              onClick={onLogout}
-            >
-              <LogOut size={14} />
-              <span className="hidden sm:inline">Logout</span>
+            <button type="button" className="ws-chip" onClick={onLogout}>
+              <LogOut size={16} />
+              <span className="hidden sm:inline">{lang === "ar" ? "خروج" : "Logout"}</span>
             </button>
           </div>
         </header>
 
         {toast ? (
-          <div className="fixed right-4 top-20 z-50 w-[min(360px,calc(100vw-2rem))] rounded-2xl border border-gold/30 bg-card p-3.5 shadow-[0_18px_40px_-20px_rgba(16,37,28,0.35)]">
+          <div className="fixed end-4 top-20 z-50 w-[min(360px,calc(100vw-2rem))] rounded-[var(--radius-lg)] border border-gold/30 bg-card p-3.5 shadow-[var(--shadow-card-hover)]">
             <p className="m-0 text-sm font-semibold text-text">{toast.title}</p>
             <p className="mt-1 mb-0 text-xs text-muted">{toast.body}</p>
             {toast.phone ? (
@@ -226,14 +223,14 @@ export function SellerShell({ title, children }) {
             <div className="mt-2 flex gap-2">
               <Link
                 href={toast.href || "/dashboard/inquiries"}
-                className="rounded-full bg-gold px-3 py-1.5 text-xs font-semibold text-white"
+                className="btn-primary !px-3 !py-1.5 !text-xs"
                 onClick={() => setToast(null)}
               >
                 Open
               </Link>
               <button
                 type="button"
-                className="rounded-full border border-border px-3 py-1.5 text-xs text-muted"
+                className="btn-outline !px-3 !py-1.5 !text-xs"
                 onClick={() => setToast(null)}
               >
                 Dismiss

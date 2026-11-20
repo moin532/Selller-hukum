@@ -6,6 +6,7 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { t } from "@/lib/marketing-i18n";
 
+/** Marketing chrome — redesign visual (calligraphy, chips) with existing i18n + links. */
 export function MarketingShell({ children, active = "" }) {
   const { theme, setTheme, lang, setLang } = useTheme();
   const isAr = lang === "ar";
@@ -22,14 +23,13 @@ export function MarketingShell({ children, active = "" }) {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 md:px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <Image
-              src="/brand/hukum-logo.png"
+              src="/brand/hukum-calligraphy.png"
               alt="Hukum"
-              width={36}
-              height={36}
-              className="h-9 w-9 object-contain"
+              width={120}
+              height={40}
+              className="h-10 w-auto object-contain"
               priority
             />
-            <span className="text-sm font-semibold uppercase tracking-[0.16em] text-text">Hukum</span>
           </Link>
           <nav className="hidden items-center gap-5 text-sm text-muted md:flex">
             {links.map((l) => (
@@ -79,11 +79,6 @@ export function MarketingShell({ children, active = "" }) {
           <a href="mailto:support@hukum.sa" className="hover:text-gold">
             {t(lang, "footerContact")}
           </a>
-          <span title="Page not published yet">{t(lang, "footerTerms")}</span>
-          <span title="Page not published yet">{t(lang, "footerPrivacy")}</span>
-          <button type="button" className="ms-auto text-gold" onClick={() => setLang(isAr ? "en" : "ar")}>
-            {isAr ? "English" : "العربية"}
-          </button>
         </div>
       </footer>
     </div>
