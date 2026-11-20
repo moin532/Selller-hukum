@@ -177,6 +177,25 @@ export default function NewProductWizardPage() {
       .finally(() => setVendorLoading(false));
   }, []);
 
+  // Keep the wizard in view when the seller moves between steps.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const behavior = reduceMotion ? "auto" : "smooth";
+    const run = () => {
+      window.scrollTo({ top: 0, left: 0, behavior });
+      document.documentElement?.scrollTo?.({ top: 0, left: 0, behavior });
+      document.body?.scrollTo?.({ top: 0, left: 0, behavior });
+      const main = document.querySelector("main");
+      if (main && typeof main.scrollTo === "function") {
+        main.scrollTo({ top: 0, left: 0, behavior });
+      }
+      document.getElementById("product-wizard-top")?.scrollIntoView({ behavior, block: "start" });
+    };
+    const t = window.setTimeout(run, 30);
+    return () => window.clearTimeout(t);
+  }, [step]);
+
   useEffect(() => {
     if (vendorLoading) return;
     if (!isVendorVerified(vendor)) {
@@ -992,7 +1011,7 @@ export default function NewProductWizardPage() {
 
   return (
     <SellerShell title="Add product">
-      <div className="relative pb-28">
+      <div id="product-wizard-top" className="relative scroll-mt-4 pb-28">
         {/* Premium brand stage */}
         <section className="relative mb-5 overflow-hidden rounded-2xl border border-[#1a4a38]/25 bg-gradient-to-br from-[#0b3d2e] via-[#145c44] to-[#17634b] text-white shadow-[0_12px_40px_rgba(11,61,46,0.22)]">
           <div
