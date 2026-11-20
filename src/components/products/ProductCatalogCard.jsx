@@ -12,11 +12,14 @@ import {
 } from "@/lib/product-display";
 
 export function productActionFlags(status) {
-  const s = String(status || "");
+  const s = String(status || "").toLowerCase();
+  // Never show Submit after the product has already been sent for review.
+  const alreadySubmitted = ["submitted", "under_review", "published", "approved"].includes(s);
   return {
-    canSubmit: ["draft", "rejected", "archived", "changes_requested"].includes(s),
+    canSubmit: !alreadySubmitted && ["draft", "rejected", "archived", "changes_requested"].includes(s),
     canUnpublish: s === "published",
     canDelete: true,
+    alreadySubmitted,
   };
 }
 
@@ -96,28 +99,28 @@ export function ProductCatalogCard({
           </p>
         </div>
 
-        <div className="mt-auto flex flex-wrap gap-2 border-t border-border pt-3">
-          <Link href={`/dashboard/products/${id}`} className="btn-outline text-xs">
+        <div className="mt-auto grid grid-cols-2 gap-2 border-t border-border pt-3">
+          <Link href={`/dashboard/products/${id}`} className="btn-outline justify-center text-center text-xs">
             View
           </Link>
-          <Link href={`/dashboard/products/${id}/edit`} className="btn-outline text-xs">
+          <Link href={`/dashboard/products/${id}/edit`} className="btn-outline justify-center text-center text-xs">
             Edit
           </Link>
           {canSubmit ? (
             <button
               type="button"
-              className="btn-primary text-xs"
+              className="btn-primary col-span-2 justify-center text-xs"
               disabled={busy || !verified}
               title={!verified ? lockTitle : "Submit for Super Admin approval"}
               onClick={() => onSubmit?.(id)}
             >
-              {busy ? "…" : "Submit"}
+              {busy ? "…" : "Final submit"}
             </button>
           ) : null}
           {canUnpublish ? (
             <button
               type="button"
-              className="btn-outline text-xs"
+              className="btn-outline col-span-2 justify-center text-xs"
               disabled={busy}
               title="Remove from public catalog (back to draft)"
               onClick={() => onUnpublish?.(id)}
@@ -128,7 +131,9 @@ export function ProductCatalogCard({
           {showDelete ? (
             <button
               type="button"
-              className="rounded-lg border border-danger/50 bg-danger/10 px-2.5 py-1.5 text-xs font-semibold text-danger hover:bg-danger/20 disabled:opacity-50"
+              className={`rounded-lg border border-danger/50 bg-danger/10 px-2.5 py-1.5 text-xs font-semibold text-danger hover:bg-danger/20 disabled:opacity-50 ${
+                canSubmit || canUnpublish ? "col-span-2" : "col-span-2"
+              }`}
               disabled={busy}
               title="Permanently delete this product"
               onClick={() => onDelete?.(id)}

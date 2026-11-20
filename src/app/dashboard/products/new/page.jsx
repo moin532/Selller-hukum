@@ -171,6 +171,7 @@ export default function NewProductWizardPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [submittedDone, setSubmittedDone] = useState(false);
 
   useEffect(() => {
     fetchMyVendor()
@@ -830,6 +831,7 @@ export default function NewProductWizardPage() {
     setMetaAuto(true);
     setSaveState("");
     setError("");
+    setSubmittedDone(false);
     setMessage("New product form ready.");
     router.replace("/dashboard/products/new");
   }
@@ -955,11 +957,13 @@ export default function NewProductWizardPage() {
       clearDraftCache();
       setDraftId("");
       setSaveState("saved");
+      setSubmittedDone(true);
+      setBusy(false);
       setMessage("Success — product submitted for Super Admin approval.");
-      // Let the seller see the success message, then open their products list.
+      // Let the seller see the success state, then open their products list.
       setTimeout(() => {
         router.replace("/dashboard/products?status=submitted");
-      }, 1200);
+      }, 1600);
     } catch (e) {
       setError(e.message || "Submit failed");
       setBusy(false);
@@ -1648,49 +1652,78 @@ export default function NewProductWizardPage() {
               ) : null}
 
               {step === 8 ? (
-                <div className="max-w-2xl space-y-4 text-sm">
+                <div className="max-w-2xl space-y-6 text-sm">
                   <div className="overflow-hidden rounded-2xl border border-[#17634b]/20 bg-gradient-to-br from-[#f7faf8] to-white">
-                    <div className="border-b border-[#17634b]/10 bg-[#17634b] px-5 py-4 text-white">
+                    <div className="border-b border-[#17634b]/10 bg-[#17634b] px-6 py-5 text-white">
                       <h3 className="m-0 font-[family-name:var(--font-head)] text-xl font-semibold">
                         {nameEn || "Untitled"}
                       </h3>
-                      <p className="mt-1 mb-0 text-sm text-white/75">
+                      <p className="mt-2 mb-0 text-sm text-white/75">
                         {localized(selectedCategory?.name)} · {brand || "No brand"} · {sku || "No SKU"}
                       </p>
                     </div>
-                    <div className="p-5">
-                      <p className="m-0 text-text">{shortDesc || descEn || "No description"}</p>
+                    <div className="p-6">
+                      <p className="m-0 leading-relaxed text-text">{shortDesc || descEn || "No description"}</p>
                       {!(productImages || []).some((u) => String(u || "").trim()) ? (
-                        <p className="mt-3 mb-0 text-sm text-danger">Add at least one image before submit.</p>
+                        <p className="mt-4 mb-0 text-sm text-danger">Add at least one image before submit.</p>
                       ) : null}
-                      <dl className="mt-4 grid gap-3 border-t border-border pt-4 text-muted sm:grid-cols-2">
+                      <dl className="mt-5 grid gap-4 border-t border-border pt-5 text-muted sm:grid-cols-2">
                         <div>
                           <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6a2f]">Specs</dt>
-                          <dd className="m-0 text-text">
+                          <dd className="m-0 mt-1 text-text">
                             {Object.keys(attributes).length} category ·{" "}
                             {customSpecs.filter((r) => r.key && r.value).length} custom
                           </dd>
                         </div>
                         <div>
                           <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6a2f]">Variants</dt>
-                          <dd className="m-0 text-text">{variants.length}</dd>
+                          <dd className="m-0 mt-1 text-text">{variants.length}</dd>
                         </div>
                         <div>
                           <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6a2f]">Pricing</dt>
-                          <dd className="m-0 text-text">
+                          <dd className="m-0 mt-1 text-text">
                             {priceOnRequest ? "Price on request" : `${unitPrice || "—"} ${currency} / ${unit}`}
                           </dd>
                         </div>
                         <div>
                           <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6a2f]">Images</dt>
-                          <dd className="m-0 text-text">
+                          <dd className="m-0 mt-1 text-text">
                             {(productImages || []).filter((u) => String(u || "").trim()).length || 0} / 7
                           </dd>
                         </div>
                       </dl>
                     </div>
                   </div>
-                  <p className="m-0 text-muted">Submit sends this for Super Admin approval.</p>
+
+                  {submittedDone ? (
+                    <div className="rounded-2xl border border-[#17634b]/25 bg-[#17634b]/8 px-5 py-5 text-center">
+                      <p className="m-0 text-[0.7rem] font-bold uppercase tracking-[0.16em] text-[#8a6a2f]">
+                        Submitted
+                      </p>
+                      <p className="mt-2 mb-0 font-[family-name:var(--font-head)] text-lg font-semibold text-[#17634b]">
+                        Sent for Super Admin approval
+                      </p>
+                      <p className="mt-2 mb-0 text-sm text-muted">Opening your products list…</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-[#c9a227]/35 bg-[#c9a227]/10 px-5 py-5">
+                      <p className="m-0 text-[0.7rem] font-bold uppercase tracking-[0.16em] text-[#8a6a2f]">
+                        Final step · الخطوة الأخيرة
+                      </p>
+                      <p className="mt-2 mb-0 text-sm leading-relaxed text-muted">
+                        Submit once for Super Admin approval. You cannot publish yourself — and Submit will not show again
+                        after this.
+                      </p>
+                      <button
+                        type="button"
+                        className="btn-primary mt-5 w-full !py-3 text-base sm:w-auto sm:min-w-[14rem]"
+                        onClick={onSubmitForReview}
+                        disabled={busy}
+                      >
+                        {busy ? "Submitting…" : "Final submit"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : null}
             </div>
@@ -1722,14 +1755,16 @@ export default function NewProductWizardPage() {
             >
               Continue
             </button>
+          ) : submittedDone ? (
+            <span className="text-sm font-semibold text-[#17634b]">Submitted</span>
           ) : (
             <button
               type="button"
               className="btn-primary min-w-[8.5rem]"
               onClick={onSubmitForReview}
-              disabled={busy || Boolean(message)}
+              disabled={busy}
             >
-              {busy ? "Submitting…" : message ? "Submitted" : "Submit for review"}
+              {busy ? "Submitting…" : "Final submit"}
             </button>
           )}
         </div>
