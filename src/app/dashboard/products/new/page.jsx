@@ -11,7 +11,6 @@ import {
 import { KeyValueEditor } from "@/components/products/KeyValueEditor";
 import { VariantEditor } from "@/components/products/VariantEditor";
 import {
-  categoryImageSrc,
   categoryKeyOf,
   fetchCategoryTree,
   fetchProductForm,
@@ -103,6 +102,7 @@ export default function NewProductWizardPage() {
   const [mainCategoryId, setMainCategoryId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
+  const [industrySearch, setIndustrySearch] = useState("");
   const [formSchema, setFormSchema] = useState(null);
   const [schemaLoading, setSchemaLoading] = useState(false);
 
@@ -165,8 +165,16 @@ export default function NewProductWizardPage() {
     }
     fetchCategoryTree()
       .then((data) => {
-        setTree({ industries: data.industries || [], categories: data.categories || [] });
-        if (!industryId && data.industries?.[0]) setIndustryId(idOf(data.industries[0]._id));
+        // Prefer Hukum developer taxonomy industries (H001…).
+        const industries = (data.industries || []).slice().sort((a, b) => {
+          const ac = String(a.code || "");
+          const bc = String(b.code || "");
+          const aH = /^H\d+/i.test(ac);
+          const bH = /^H\d+/i.test(bc);
+          if (aH !== bH) return aH ? -1 : 1;
+          return (a.order || 0) - (b.order || 0) || localized(a.name).localeCompare(localized(b.name));
+        });
+        setTree({ industries, categories: data.categories || [] });
       })
       .catch((e) => setError(e.message || "Failed to load categories"));
   }, [vendor, vendorLoading]);
@@ -479,13 +487,35 @@ export default function NewProductWizardPage() {
     metaAuto,
   ]);
 
+  const selectedIndustry = useMemo(
+    () => tree.industries.find((i) => idOf(i._id) === industryId) || null,
+    [tree.industries, industryId]
+  );
+
   const selectedMainCategory = useMemo(
     () => tree.categories.find((c) => idOf(c._id) === mainCategoryId) || null,
     [tree.categories, mainCategoryId]
   );
 
+  const visibleIndustries = useMemo(() => {
+    let list = tree.industries.filter((i) => (i.status || "active") === "active");
+    if (industrySearch.trim()) {
+      const q = industrySearch.trim().toLowerCase();
+      list = list.filter((i) => {
+        const en = localized(i.name).toLowerCase();
+        const ar = String(i.name?.ar || "").toLowerCase();
+        const code = String(i.code || "").toLowerCase();
+        return en.includes(q) || ar.includes(q) || code.includes(q);
+      });
+    }
+    return list;
+  }, [tree.industries, industrySearch]);
+
   /** Once a main category with children is chosen, show only the subcategory panel. */
   const showSubcategoryPanel = Boolean(mainCategoryId && subcategories.length > 0);
+
+  // 1 = pick industry, 2 = pick category, 3 = pick product type (leaf)
+  const categoryStage = !industryId ? 1 : !mainCategoryId ? 2 : 3;
 
   async function onSelectMainCategory(cat) {
     if (categoryId && Object.keys(attributes).length) {
@@ -515,8 +545,15 @@ export default function NewProductWizardPage() {
     setCategoryId("");
     setFormSchema(null);
     setAttributes({});
+    setCategorySearch("");
     setError("");
     setMessage("");
+  }
+
+  function clearIndustry() {
+    setIndustryId("");
+    setIndustrySearch("");
+    clearMainCategory();
   }
 
   async function onSelectCategory(cat) {
@@ -1023,150 +1060,169 @@ export default function NewProductWizardPage() {
 
       <div className="rounded-xl border border-border bg-card p-5">
         {step === 0 ? (
-          <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
+          <div className="space-y-5">
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">Industry</p>
-              <ul className="space-y-1">
-                {tree.industries.map((ind) => (
-                  <li key={String(ind._id)}>
-                    <button
-                      type="button"
-                      className={`w-full rounded-lg px-3 py-2 text-left text-sm ${
-                        industryId === idOf(ind._id) ? "bg-gold-muted text-gold" : "text-muted hover:bg-surface"
-                      }`}
-                      onClick={() => {
-                        setIndustryId(idOf(ind._id));
-                        clearMainCategory();
-                      }}
-                    >
-                      {localized(ind.name)}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <h2 className="m-0 text-lg font-semibold text-text">Choose where this product belongs</h2>
+              <p className="mt-1 mb-0 text-sm text-muted">
+                From the Hukum taxonomy: Industry → Category → Product type. Buyers find you by this path.
+              </p>
             </div>
 
-            <div className="space-y-4">
-              {showSubcategoryPanel ? (
-                <div id="product-subcategory-block">
-                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gold/40 bg-gold-muted/30 px-4 py-3">
-                    <div>
-                      <p className="m-0 text-xs uppercase tracking-wide text-muted">Main category</p>
-                      <p className="m-0 text-sm font-semibold text-gold">
-                        {localized(selectedMainCategory?.name)}
-                      </p>
-                      <p className="m-0 mt-1 text-xs text-muted">
-                        Now choose a subcategory — this opens the product form.
-                      </p>
-                    </div>
-                    <button type="button" className="btn-outline" onClick={clearMainCategory}>
-                      Change main category
-                    </button>
-                  </div>
+            <ol className="m-0 flex flex-wrap gap-2 p-0 list-none">
+              {[
+                { n: 1, label: "Industry" },
+                { n: 2, label: "Category" },
+                { n: 3, label: "Product type" },
+              ].map((s) => (
+                <li
+                  key={s.n}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                    categoryStage === s.n
+                      ? "border-gold bg-gold-muted text-gold"
+                      : categoryStage > s.n
+                        ? "border-border bg-surface text-text"
+                        : "border-border text-muted"
+                  }`}
+                >
+                  {s.n}. {s.label}
+                </li>
+              ))}
+            </ol>
 
-                  <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">
-                    2. Subcategory (required)
+            {(selectedIndustry || selectedMainCategory || selectedCategory) && (
+              <div className="flex flex-wrap items-center gap-2 rounded-[var(--radius-md)] border border-border bg-surface/70 px-3 py-2 text-sm">
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted">Path</span>
+                {selectedIndustry ? (
+                  <button type="button" className="chip" onClick={clearIndustry}>
+                    {localized(selectedIndustry.name)} ×
+                  </button>
+                ) : null}
+                {selectedMainCategory ? (
+                  <button type="button" className="chip" onClick={clearMainCategory}>
+                    {localized(selectedMainCategory.name)} ×
+                  </button>
+                ) : null}
+                {selectedCategory && idOf(selectedCategory.parentId) ? (
+                  <span className="chip chip--ok">{localized(selectedCategory.name)}</span>
+                ) : null}
+              </div>
+            )}
+
+            {categoryStage === 1 ? (
+              <div>
+                <input
+                  className="input-field mb-3 max-w-md"
+                  placeholder="Search industries (e.g. Safety, Food, Construction)…"
+                  value={industrySearch}
+                  onChange={(e) => setIndustrySearch(e.target.value)}
+                />
+                {visibleIndustries.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
+                    No industries match. Try another search.
                   </p>
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    {visibleIndustries.map((ind) => (
+                      <button
+                        key={idOf(ind._id)}
+                        type="button"
+                        className="rounded-[var(--radius-md)] border border-border bg-surface px-4 py-3 text-left transition hover:border-gold/50"
+                        onClick={() => {
+                          setIndustryId(idOf(ind._id));
+                          clearMainCategory();
+                          setIndustrySearch("");
+                        }}
+                      >
+                        <p className="m-0 text-sm font-semibold text-text">{localized(ind.name)}</p>
+                        {ind.name?.ar ? <p className="m-0 mt-1 text-xs text-muted" dir="rtl">{ind.name.ar}</p> : null}
+                        {ind.code ? <p className="m-0 mt-1 text-[10px] uppercase tracking-wide text-muted">{ind.code}</p> : null}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {categoryStage === 2 ? (
+              <div>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="m-0 text-sm text-muted">
+                    Categories in <strong className="text-text">{localized(selectedIndustry?.name)}</strong>
+                  </p>
+                  <button type="button" className="btn-outline !py-1.5 !text-xs" onClick={clearIndustry}>
+                    Change industry
+                  </button>
+                </div>
+                <input
+                  className="input-field mb-3 max-w-md"
+                  placeholder="Search categories…"
+                  value={categorySearch}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                />
+                {mainCategories.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
+                    No categories in this industry yet.
+                  </p>
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    {mainCategories.map((cat) => (
+                      <button
+                        key={idOf(cat._id)}
+                        type="button"
+                        onClick={() => onSelectMainCategory(cat)}
+                        className="rounded-[var(--radius-md)] border border-border bg-surface px-4 py-3 text-left transition hover:border-gold/50"
+                      >
+                        <p className="m-0 text-sm font-semibold text-text">{localized(cat.name)}</p>
+                        {cat.name?.ar ? <p className="m-0 mt-1 text-xs text-muted" dir="rtl">{cat.name.ar}</p> : null}
+                        <p className="m-0 mt-2 text-[11px] text-gold">Choose product type →</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {categoryStage === 3 ? (
+              <div id="product-subcategory-block">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="m-0 text-sm text-muted">
+                    Product types in <strong className="text-text">{localized(selectedMainCategory?.name)}</strong>
+                  </p>
+                  <button type="button" className="btn-outline !py-1.5 !text-xs" onClick={clearMainCategory}>
+                    Change category
+                  </button>
+                </div>
+                {showSubcategoryPanel ? (
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                     {subcategories.map((cat) => {
-                      const src = categoryImageSrc(cat);
                       const selected = categoryId === idOf(cat._id);
                       return (
                         <button
                           key={idOf(cat._id)}
                           type="button"
                           onClick={() => onSelectCategory(cat)}
-                          className={`overflow-hidden rounded-xl border text-left transition-colors ${
+                          className={`rounded-[var(--radius-md)] border px-4 py-3 text-left transition ${
                             selected
                               ? "border-gold bg-gold-muted ring-1 ring-gold"
                               : "border-border bg-surface hover:border-gold/50"
                           }`}
                         >
-                          <div className="relative aspect-[16/10] bg-bg">
-                            {src ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={src}
-                                alt=""
-                                className="h-full w-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = "none";
-                                  e.currentTarget.parentElement?.classList.add("bg-gold-muted");
-                                }}
-                              />
-                            ) : (
-                              <div className="flex h-full items-center justify-center bg-gold-muted/40 px-3 text-center text-xs font-medium text-gold">
-                                {localized(cat.name)}
-                              </div>
-                            )}
-                          </div>
-                          <div className="p-3">
-                            <p className="m-0 text-sm font-medium text-text">{localized(cat.name)}</p>
-                            <p className="m-0 mt-1 text-[11px] text-muted">
-                              {selected ? "Selected — continuing…" : "Click to continue"}
-                            </p>
-                          </div>
+                          <p className="m-0 text-sm font-semibold text-text">{localized(cat.name)}</p>
+                          {cat.name?.ar ? <p className="m-0 mt-1 text-xs text-muted" dir="rtl">{cat.name.ar}</p> : null}
+                          <p className="m-0 mt-2 text-[11px] text-muted">
+                            {selected ? "Selected — opening form…" : "Select to continue"}
+                          </p>
                         </button>
                       );
                     })}
                   </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <p className="m-0 text-xs font-medium uppercase tracking-wide text-muted">1. Main category</p>
-                  </div>
-                  <input
-                    className="input-field mb-3"
-                    placeholder="Search main categories…"
-                    value={categorySearch}
-                    onChange={(e) => setCategorySearch(e.target.value)}
-                  />
-                  {mainCategories.length === 0 ? (
-                    <p className="rounded-xl border border-dashed border-border bg-surface px-4 py-8 text-center text-sm text-muted">
-                      No active categories for this industry. Ask Super Admin to add or activate categories under Taxonomy.
-                    </p>
-                  ) : (
-                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                      {mainCategories.map((cat) => {
-                        const src = categoryImageSrc(cat);
-                        return (
-                          <button
-                            key={idOf(cat._id)}
-                            type="button"
-                            onClick={() => onSelectMainCategory(cat)}
-                            className="overflow-hidden rounded-xl border border-border bg-surface text-left transition-colors hover:border-gold/50"
-                          >
-                            <div className="relative aspect-[16/10] bg-bg">
-                              {src ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={src}
-                                  alt=""
-                                  className="h-full w-full object-cover"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = "none";
-                                    e.currentTarget.parentElement?.classList.add("bg-gold-muted");
-                                  }}
-                                />
-                              ) : (
-                                <div className="flex h-full items-center justify-center bg-gold-muted/40 px-3 text-center text-xs font-medium text-gold">
-                                  {localized(cat.name)}
-                                </div>
-                              )}
-                            </div>
-                            <div className="p-3">
-                              <p className="m-0 text-sm font-medium text-text">{localized(cat.name)}</p>
-                              <p className="m-0 mt-1 text-[11px] text-muted">Click to select</p>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                ) : (
+                  <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
+                    No product types under this category. Pick another category.
+                  </p>
+                )}
+              </div>
+            ) : null}
           </div>
         ) : null}
 
