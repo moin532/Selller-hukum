@@ -61,9 +61,13 @@ export default function ProductsPage() {
   }, [load]);
 
   const visible = items.filter((p) => {
-    if (!q.trim()) return true;
-    const hay = `${localized(p.name, "")} ${p.sku || ""} ${p.brand || ""}`.toLowerCase();
-    return hay.includes(q.trim().toLowerCase());
+    const raw = q.trim().toLowerCase();
+    if (!raw) return true;
+    const hay = `${localized(p.name, "")} ${p.sku || ""} ${p.brand || ""} ${p.status || ""}`.toLowerCase();
+    if (hay.includes(raw)) return true;
+    // Token match so "x-360 fire" still finds the listing
+    const tokens = raw.split(/[\s/]+/).filter((t) => t.length > 1);
+    return tokens.length > 0 && tokens.every((t) => hay.includes(t));
   });
 
   function toggleSelect(id, on) {
