@@ -24,15 +24,15 @@ import { ProductImagesUploader } from "@/components/products/ProductImagesUpload
 import { isVendorVerified, vendorLockMessage } from "@/lib/vendor-access";
 
 const STEPS = [
-  { id: "category", label: "Category" },
-  { id: "info", label: "Information" },
-  { id: "description", label: "Description" },
-  { id: "specs", label: "Specifications" },
-  { id: "variants", label: "Variants" },
-  { id: "pricing", label: "Pricing" },
-  { id: "media", label: "Images" },
-  { id: "seo", label: "SEO / Meta" },
-  { id: "submit", label: "Submit" },
+  { id: "category", label: "Category", labelAr: "التصنيف", blurb: "Where buyers will find this product" },
+  { id: "info", label: "Information", labelAr: "المعلومات", blurb: "Name, brand, and product identity" },
+  { id: "description", label: "Description", labelAr: "الوصف", blurb: "Tell buyers what you offer" },
+  { id: "specs", label: "Specifications", labelAr: "المواصفات", blurb: "Technical and commercial details" },
+  { id: "variants", label: "Variants", labelAr: "المتغيرات", blurb: "Optional sizes, colors, SKUs" },
+  { id: "pricing", label: "Pricing", labelAr: "التسعير", blurb: "MOQ, currency, and availability" },
+  { id: "media", label: "Images", labelAr: "الصور", blurb: "Up to 7 product photos" },
+  { id: "seo", label: "SEO", labelAr: "تحسين الظهور", blurb: "How this appears in search" },
+  { id: "submit", label: "Submit", labelAr: "إرسال", blurb: "Review and send for approval" },
 ];
 
 const CURRENCIES = ["SAR", "USD", "EUR", "AED"];
@@ -92,14 +92,20 @@ function autoMetaDescription(shortDesc, desc, name) {
 
 function Field({ label, required, hint, className = "", children }) {
   return (
-    <label className={`wizard-field ${className}`.trim()}>
-      <span className="wizard-field__label">
+    <label className={`flex min-w-0 flex-col gap-1.5 ${className}`.trim()}>
+      <span className="text-[0.72rem] font-semibold tracking-wide text-text">
         {label}
         {required ? <span className="text-danger"> *</span> : null}
       </span>
       {children}
-      {hint ? <span className="wizard-field__hint">{hint}</span> : null}
+      {hint ? <span className="text-[0.7rem] text-muted">{hint}</span> : null}
     </label>
+  );
+}
+
+function SectionLabel({ children }) {
+  return (
+    <p className="mb-3 mt-0 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[#8a6a2f]">{children}</p>
   );
 }
 
@@ -972,582 +978,698 @@ export default function NewProductWizardPage() {
   }
 
   const stepMeta = STEPS[step];
+  const progressPct = Math.round(((step + (categoryId || step > 0 ? 1 : 0)) / STEPS.length) * 100);
   const footerHint =
     step === 0 && !categoryId
       ? !industryId
-        ? "Select an industry to begin"
+        ? "Choose industry first"
         : !mainCategoryId
-          ? "Select a category"
-          : "Select a product type"
+          ? "Then choose category"
+          : "Then choose product type"
       : selectedCategory
         ? localized(selectedCategory.name)
         : null;
 
   return (
     <SellerShell title="Add product">
-      <div className="wizard-shell">
-        <div className="wizard-top">
-          <div>
-            <h1>Add product</h1>
-            <p className="wizard-top__meta">
-              {draftId ? (
-                <>
-                  Draft <span className="font-semibold text-text">{String(draftId).slice(-6)}</span>
-                  {saveState === "saving"
-                    ? " · saving…"
-                    : saveState === "saved"
-                      ? " · saved"
-                      : " · auto-saves"}
-                </>
-              ) : (
-                "Complete each step, then submit for approval."
-              )}
-            </p>
-          </div>
-          <div className="wizard-top__actions">
-            <Link href="/dashboard/products/ai-catalogue" className="wizard-link-btn">
-              AI catalogue
-            </Link>
-            <button type="button" className="wizard-link-btn" onClick={startNewProduct}>
-              Start new
-            </button>
-            <button
-              type="button"
-              className="wizard-link-btn"
-              onClick={saveDraft}
-              disabled={saveState === "saving"}
-            >
-              {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : "Save draft"}
-            </button>
-          </div>
-        </div>
-
-        <div className="wizard-progress">
-          <div className="wizard-progress__head">
-            <h2 className="wizard-progress__title">
-              {step + 1}. {stepMeta.label}
-            </h2>
-            <span className="wizard-progress__count">
-              Step {step + 1} of {STEPS.length}
-            </span>
-          </div>
-          <div className="wizard-progress__track" role="list" aria-label="Progress">
-            {STEPS.map((s, i) => {
-              const done = i < step;
-              const active = i === step;
-              return (
+      <div className="relative pb-28">
+        {/* Premium brand stage */}
+        <section className="relative mb-5 overflow-hidden rounded-2xl border border-[#1a4a38]/25 bg-gradient-to-br from-[#0b3d2e] via-[#145c44] to-[#17634b] text-white shadow-[0_12px_40px_rgba(11,61,46,0.22)]">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.14]"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L60 30L30 60L0 30z' fill='none' stroke='%23c9a227' stroke-width='0.6'/%3E%3C/svg%3E\")",
+            }}
+            aria-hidden
+          />
+          <div className="relative flex flex-wrap items-end justify-between gap-4 px-5 py-6 md:px-7 md:py-7">
+            <div className="max-w-xl">
+              <p className="m-0 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[#e8d5a3]">
+                Hukum · المملكة
+              </p>
+              <h1 className="mt-2 mb-0 font-[family-name:var(--font-head)] text-3xl font-semibold tracking-tight md:text-4xl">
+                Add product
+              </h1>
+              <p className="mt-1 mb-0 font-[family-name:var(--font-tajawal)] text-lg text-white/85" dir="rtl">
+                أضف منتجاً إلى السوق
+              </p>
+              <p className="mt-3 mb-0 max-w-md text-sm leading-relaxed text-white/75">
+                {stepMeta.blurb}. One calm step at a time — your listing stays draft-safe until you submit.
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <div className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-right backdrop-blur-sm">
+                <p className="m-0 text-[0.65rem] uppercase tracking-wider text-[#e8d5a3]">Progress</p>
+                <p className="m-0 mt-1 font-[family-name:var(--font-head)] text-2xl font-semibold tabular-nums">
+                  {Math.min(progressPct, 100)}%
+                </p>
+                <p className="m-0 mt-0.5 text-xs text-white/70">
+                  Step {step + 1} / {STEPS.length}
+                  {draftId ? ` · Draft ${String(draftId).slice(-6)}` : ""}
+                </p>
+              </div>
+              <div className="flex flex-wrap justify-end gap-1.5">
+                <Link
+                  href="/dashboard/products/ai-catalogue"
+                  className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+                >
+                  AI catalogue
+                </Link>
                 <button
-                  key={s.id}
                   type="button"
-                  role="listitem"
-                  title={`${i + 1}. ${s.label}`}
-                  aria-current={active ? "step" : undefined}
-                  className={`wizard-progress__seg${done ? " is-done" : ""}${active ? " is-active" : ""}`}
-                  onClick={() => i <= step && setStep(i)}
-                  disabled={i > step}
-                />
-              );
-            })}
-          </div>
-        </div>
-
-        {error ? <p className="m-0 text-sm text-danger">{error}</p> : null}
-        {message && !error ? <p className="m-0 text-sm text-gold">{message}</p> : null}
-
-        <div className="wizard-panel">
-          {step === 0 ? (
-            <div className="space-y-3">
-              {(selectedIndustry || selectedMainCategory) && (
-                <nav className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted" aria-label="Category path">
-                  {selectedIndustry ? (
-                    <button type="button" className="font-medium text-text hover:text-gold" onClick={clearIndustry}>
-                      {localized(selectedIndustry.name)}
-                    </button>
-                  ) : null}
-                  {selectedMainCategory ? (
-                    <>
-                      <span aria-hidden>/</span>
-                      <button type="button" className="font-medium text-text hover:text-gold" onClick={clearMainCategory}>
-                        {localized(selectedMainCategory.name)}
-                      </button>
-                    </>
-                  ) : null}
-                  {selectedCategory && idOf(selectedCategory.parentId) ? (
-                    <>
-                      <span aria-hidden>/</span>
-                      <span className="font-semibold text-gold">{localized(selectedCategory.name)}</span>
-                    </>
-                  ) : null}
-                </nav>
-              )}
-
-              <div className="overflow-hidden rounded-lg border border-border">
-                <div className="grid min-h-[380px] lg:grid-cols-3">
-                  <section className="flex min-h-[240px] flex-col border-b border-border lg:border-b-0 lg:border-r">
-                    <div className="border-b border-border px-3 py-2">
-                      <p className="wizard-section-title !mb-2">Industry</p>
-                      <input
-                        className="input-field !min-h-9 !py-1.5 !text-sm"
-                        placeholder="Search…"
-                        value={industrySearch}
-                        onChange={(e) => setIndustrySearch(e.target.value)}
-                        aria-label="Search industries"
-                      />
-                    </div>
-                    <ul className="m-0 max-h-[320px] flex-1 list-none overflow-y-auto p-1">
-                      {visibleIndustries.length === 0 ? (
-                        <li className="px-3 py-6 text-center text-sm text-muted">No match</li>
-                      ) : (
-                        visibleIndustries.map((ind) => {
-                          const active = industryId === idOf(ind._id);
-                          return (
-                            <li key={idOf(ind._id)}>
-                              <button
-                                type="button"
-                                className={`flex w-full items-start gap-2 rounded-md px-2.5 py-2 text-left transition ${
-                                  active ? "bg-gold-muted text-gold" : "text-text hover:bg-[var(--bg)]"
-                                }`}
-                                onClick={() => {
-                                  if (industryId === idOf(ind._id)) return;
-                                  setIndustryId(idOf(ind._id));
-                                  clearMainCategory();
-                                }}
-                              >
-                                <span className="min-w-0 flex-1">
-                                  <span className="block text-sm font-medium leading-snug">{localized(ind.name)}</span>
-                                  {ind.name?.ar ? (
-                                    <span className="mt-0.5 block text-xs text-muted" dir="rtl">
-                                      {ind.name.ar}
-                                    </span>
-                                  ) : null}
-                                </span>
-                                <span className={`mt-0.5 shrink-0 text-xs ${active ? "text-gold" : "text-muted"}`}>›</span>
-                              </button>
-                            </li>
-                          );
-                        })
-                      )}
-                    </ul>
-                  </section>
-
-                  <section className="flex min-h-[240px] flex-col border-b border-border lg:border-b-0 lg:border-r">
-                    <div className="border-b border-border px-3 py-2">
-                      <p className="wizard-section-title !mb-2">Category</p>
-                      <input
-                        className="input-field !min-h-9 !py-1.5 !text-sm"
-                        placeholder={industryId ? "Search…" : "Select industry first"}
-                        value={categorySearch}
-                        onChange={(e) => setCategorySearch(e.target.value)}
-                        disabled={!industryId}
-                        aria-label="Search categories"
-                      />
-                    </div>
-                    {!industryId ? (
-                      <p className="m-0 px-4 py-10 text-center text-sm text-muted">Select an industry</p>
-                    ) : mainCategories.length === 0 ? (
-                      <p className="m-0 px-4 py-10 text-center text-sm text-muted">No categories found</p>
-                    ) : (
-                      <ul className="m-0 max-h-[320px] flex-1 list-none overflow-y-auto p-1">
-                        {mainCategories.map((cat) => {
-                          const active = mainCategoryId === idOf(cat._id);
-                          return (
-                            <li key={idOf(cat._id)}>
-                              <button
-                                type="button"
-                                className={`flex w-full items-start gap-2 rounded-md px-2.5 py-2 text-left transition ${
-                                  active ? "bg-gold-muted text-gold" : "text-text hover:bg-[var(--bg)]"
-                                }`}
-                                onClick={() => onSelectMainCategory(cat)}
-                              >
-                                <span className="min-w-0 flex-1">
-                                  <span className="block text-sm font-medium leading-snug">{localized(cat.name)}</span>
-                                  {cat.name?.ar ? (
-                                    <span className="mt-0.5 block text-xs text-muted" dir="rtl">
-                                      {cat.name.ar}
-                                    </span>
-                                  ) : null}
-                                </span>
-                                <span className={`mt-0.5 shrink-0 text-xs ${active ? "text-gold" : "text-muted"}`}>›</span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </section>
-
-                  <section className="flex min-h-[240px] flex-col" id="product-subcategory-block">
-                    <div className="border-b border-border px-3 py-2">
-                      <p className="wizard-section-title !mb-2">Product type</p>
-                      <input
-                        className="input-field !min-h-9 !py-1.5 !text-sm"
-                        placeholder={mainCategoryId ? "Search…" : "Select category first"}
-                        value={typeSearch}
-                        onChange={(e) => setTypeSearch(e.target.value)}
-                        disabled={!mainCategoryId}
-                        aria-label="Search product types"
-                      />
-                    </div>
-                    {!mainCategoryId ? (
-                      <p className="m-0 px-4 py-10 text-center text-sm text-muted">Select a category</p>
-                    ) : showSubcategoryPanel ? (
-                      <ul className="m-0 max-h-[320px] flex-1 list-none overflow-y-auto p-1">
-                        {subcategories.map((cat) => {
-                          const selected = categoryId === idOf(cat._id);
-                          return (
-                            <li key={idOf(cat._id)}>
-                              <button
-                                type="button"
-                                className={`flex w-full items-start gap-2 rounded-md px-2.5 py-2 text-left transition ${
-                                  selected ? "bg-gold text-white" : "text-text hover:bg-[var(--bg)]"
-                                }`}
-                                onClick={() => onSelectCategory(cat)}
-                              >
-                                <span className="min-w-0 flex-1">
-                                  <span className="block text-sm font-medium leading-snug">{localized(cat.name)}</span>
-                                  {cat.name?.ar ? (
-                                    <span
-                                      className={`mt-0.5 block text-xs ${selected ? "text-white/80" : "text-muted"}`}
-                                      dir="rtl"
-                                    >
-                                      {cat.name.ar}
-                                    </span>
-                                  ) : null}
-                                </span>
-                                {selected ? <span className="mt-0.5 shrink-0 text-xs">✓</span> : null}
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    ) : categoryId && mainCategoryId === categoryId ? (
-                      <p className="m-0 px-4 py-10 text-center text-sm text-gold">Ready — no subtypes needed.</p>
-                    ) : (
-                      <p className="m-0 px-4 py-10 text-center text-sm text-muted">No product types here</p>
-                    )}
-                  </section>
-                </div>
+                  className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+                  onClick={startNewProduct}
+                >
+                  Start new
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg bg-[#c9a227]/20 px-3 py-1.5 text-xs font-semibold text-[#f0e2b8] transition hover:bg-[#c9a227]/30"
+                  onClick={saveDraft}
+                  disabled={saveState === "saving"}
+                >
+                  {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : "Save draft"}
+                </button>
               </div>
             </div>
-          ) : null}
+          </div>
+          <div className="relative h-1.5 bg-black/20">
+            <div
+              className="h-full bg-gradient-to-r from-[#c9a227] to-[#e8d5a3] transition-all duration-500 ease-out"
+              style={{ width: `${Math.min(progressPct, 100)}%` }}
+            />
+          </div>
+        </section>
 
-          {step === 1 ? (
-            <div className="space-y-5">
-              {selectedCategory ? (
-                <p className="m-0 rounded-lg bg-[var(--bg)] px-3 py-2 text-xs text-muted">
-                  Category{" "}
-                  <span className="font-semibold text-text">{localized(selectedCategory.name)}</span>
+        <div className="grid gap-5 xl:grid-cols-[220px_minmax(0,1fr)]">
+          {/* Journey rail — removes confusion */}
+          <aside className="hidden xl:block">
+            <nav className="sticky top-4 space-y-1 rounded-2xl border border-border bg-card p-3" aria-label="Listing steps">
+              <p className="mb-3 px-2 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-muted">Your path</p>
+              {STEPS.map((s, i) => {
+                const done = i < step;
+                const active = i === step;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    disabled={i > step}
+                    onClick={() => i <= step && setStep(i)}
+                    className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition ${
+                      active
+                        ? "bg-[#17634b] text-white"
+                        : done
+                          ? "text-text hover:bg-[#17634b]/08"
+                          : "cursor-default text-muted/70"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[0.7rem] font-bold ${
+                        active
+                          ? "bg-[#c9a227] text-[#0b3d2e]"
+                          : done
+                            ? "bg-[#17634b]/15 text-[#17634b]"
+                            : "bg-border/80 text-muted"
+                      }`}
+                    >
+                      {done ? "✓" : i + 1}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold leading-tight">{s.label}</span>
+                      <span
+                        className={`mt-0.5 block truncate text-[0.7rem] ${active ? "text-white/70" : "text-muted"}`}
+                        dir="rtl"
+                      >
+                        {s.labelAr}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
+
+          <div className="min-w-0 space-y-4">
+            {/* Current step focus */}
+            <div className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4">
+              <div>
+                <p className="m-0 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[#8a6a2f]">
+                  Now working on
                 </p>
+                <h2 className="mt-1 mb-0 font-[family-name:var(--font-head)] text-2xl font-semibold tracking-tight text-text">
+                  {stepMeta.label}
+                </h2>
+                <p className="mt-1 mb-0 font-[family-name:var(--font-tajawal)] text-base text-muted" dir="rtl">
+                  {stepMeta.labelAr}
+                </p>
+              </div>
+              <ol className="m-0 flex list-none gap-1 p-0 xl:hidden">
+                {STEPS.map((s, i) => (
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      title={s.label}
+                      disabled={i > step}
+                      onClick={() => i <= step && setStep(i)}
+                      className={`h-2 w-2 rounded-full transition ${
+                        i === step ? "bg-[#17634b] scale-125" : i < step ? "bg-[#c9a227]" : "bg-border"
+                      }`}
+                    />
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            {error ? (
+              <p className="m-0 rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">{error}</p>
+            ) : null}
+            {message && !error ? (
+              <p className="m-0 rounded-xl border border-gold/30 bg-gold-muted px-4 py-3 text-sm text-gold">{message}</p>
+            ) : null}
+
+            <div
+              key={step}
+              className="animate-[fadeRise_0.35s_ease-out] rounded-2xl border border-border bg-card p-5 md:p-6"
+            >
+              {step === 0 ? (
+                <div className="space-y-4">
+                  <p className="m-0 text-sm text-muted">
+                    Tap left → middle → right. Buyers discover you by this path.
+                  </p>
+                  {(selectedIndustry || selectedMainCategory || selectedCategory) && (
+                    <nav
+                      className="flex flex-wrap items-center gap-2 rounded-xl bg-[#17634b]/05 px-3 py-2.5 text-sm"
+                      aria-label="Category path"
+                    >
+                      {selectedIndustry ? (
+                        <button
+                          type="button"
+                          className="font-semibold text-[#17634b] underline-offset-2 hover:underline"
+                          onClick={clearIndustry}
+                        >
+                          {localized(selectedIndustry.name)}
+                        </button>
+                      ) : null}
+                      {selectedMainCategory ? (
+                        <>
+                          <span className="text-[#c9a227]">›</span>
+                          <button
+                            type="button"
+                            className="font-semibold text-[#17634b] underline-offset-2 hover:underline"
+                            onClick={clearMainCategory}
+                          >
+                            {localized(selectedMainCategory.name)}
+                          </button>
+                        </>
+                      ) : null}
+                      {selectedCategory && idOf(selectedCategory.parentId) ? (
+                        <>
+                          <span className="text-[#c9a227]">›</span>
+                          <span className="font-bold text-text">{localized(selectedCategory.name)}</span>
+                        </>
+                      ) : null}
+                    </nav>
+                  )}
+
+                  <div className="overflow-hidden rounded-2xl border border-[#17634b]/15 bg-gradient-to-b from-white to-[#f7faf8]">
+                    <div className="grid min-h-[400px] lg:grid-cols-3">
+                      <section className="flex flex-col border-b border-border lg:border-b-0 lg:border-r">
+                        <div className="border-b border-border bg-[#17634b]/5 px-3 py-3">
+                          <SectionLabel>1 · Industry</SectionLabel>
+                          <input
+                            className="input-field !min-h-10 !rounded-lg !py-2 !text-sm"
+                            placeholder="Search industry…"
+                            value={industrySearch}
+                            onChange={(e) => setIndustrySearch(e.target.value)}
+                          />
+                        </div>
+                        <ul className="m-0 max-h-[340px] flex-1 list-none overflow-y-auto p-1.5">
+                          {visibleIndustries.length === 0 ? (
+                            <li className="px-3 py-8 text-center text-sm text-muted">No match</li>
+                          ) : (
+                            visibleIndustries.map((ind) => {
+                              const active = industryId === idOf(ind._id);
+                              return (
+                                <li key={idOf(ind._id)}>
+                                  <button
+                                    type="button"
+                                    className={`group flex w-full items-start gap-2 rounded-xl px-3 py-2.5 text-left transition duration-200 ${
+                                      active
+                                        ? "bg-[#17634b] text-white shadow-sm"
+                                        : "text-text hover:bg-[#17634b]/08"
+                                    }`}
+                                    onClick={() => {
+                                      if (industryId === idOf(ind._id)) return;
+                                      setIndustryId(idOf(ind._id));
+                                      clearMainCategory();
+                                    }}
+                                  >
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block text-sm font-semibold leading-snug">{localized(ind.name)}</span>
+                                      {ind.name?.ar ? (
+                                        <span
+                                          className={`mt-0.5 block text-xs ${active ? "text-white/75" : "text-muted"}`}
+                                          dir="rtl"
+                                        >
+                                          {ind.name.ar}
+                                        </span>
+                                      ) : null}
+                                    </span>
+                                    <span className={`mt-0.5 text-sm ${active ? "text-[#e8d5a3]" : "text-muted"}`}>›</span>
+                                  </button>
+                                </li>
+                              );
+                            })
+                          )}
+                        </ul>
+                      </section>
+
+                      <section className="flex flex-col border-b border-border lg:border-b-0 lg:border-r">
+                        <div className="border-b border-border bg-[#17634b]/5 px-3 py-3">
+                          <SectionLabel>2 · Category</SectionLabel>
+                          <input
+                            className="input-field !min-h-10 !rounded-lg !py-2 !text-sm"
+                            placeholder={industryId ? "Search category…" : "Pick industry first"}
+                            value={categorySearch}
+                            onChange={(e) => setCategorySearch(e.target.value)}
+                            disabled={!industryId}
+                          />
+                        </div>
+                        {!industryId ? (
+                          <p className="m-auto px-6 py-12 text-center text-sm text-muted">
+                            Select an industry on the left
+                          </p>
+                        ) : mainCategories.length === 0 ? (
+                          <p className="m-auto px-6 py-12 text-center text-sm text-muted">No categories</p>
+                        ) : (
+                          <ul className="m-0 max-h-[340px] flex-1 list-none overflow-y-auto p-1.5">
+                            {mainCategories.map((cat) => {
+                              const active = mainCategoryId === idOf(cat._id);
+                              return (
+                                <li key={idOf(cat._id)}>
+                                  <button
+                                    type="button"
+                                    className={`flex w-full items-start gap-2 rounded-xl px-3 py-2.5 text-left transition duration-200 ${
+                                      active
+                                        ? "bg-[#17634b] text-white shadow-sm"
+                                        : "text-text hover:bg-[#17634b]/08"
+                                    }`}
+                                    onClick={() => onSelectMainCategory(cat)}
+                                  >
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block text-sm font-semibold leading-snug">{localized(cat.name)}</span>
+                                      {cat.name?.ar ? (
+                                        <span
+                                          className={`mt-0.5 block text-xs ${active ? "text-white/75" : "text-muted"}`}
+                                          dir="rtl"
+                                        >
+                                          {cat.name.ar}
+                                        </span>
+                                      ) : null}
+                                    </span>
+                                    <span className={`mt-0.5 text-sm ${active ? "text-[#e8d5a3]" : "text-muted"}`}>›</span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </section>
+
+                      <section className="flex flex-col" id="product-subcategory-block">
+                        <div className="border-b border-border bg-[#c9a227]/10 px-3 py-3">
+                          <SectionLabel>3 · Product type</SectionLabel>
+                          <input
+                            className="input-field !min-h-10 !rounded-lg !py-2 !text-sm"
+                            placeholder={mainCategoryId ? "Search type…" : "Pick category first"}
+                            value={typeSearch}
+                            onChange={(e) => setTypeSearch(e.target.value)}
+                            disabled={!mainCategoryId}
+                          />
+                        </div>
+                        {!mainCategoryId ? (
+                          <p className="m-auto px-6 py-12 text-center text-sm text-muted">Select a category</p>
+                        ) : showSubcategoryPanel ? (
+                          <ul className="m-0 max-h-[340px] flex-1 list-none overflow-y-auto p-1.5">
+                            {subcategories.map((cat) => {
+                              const selected = categoryId === idOf(cat._id);
+                              return (
+                                <li key={idOf(cat._id)}>
+                                  <button
+                                    type="button"
+                                    className={`flex w-full items-start gap-2 rounded-xl px-3 py-2.5 text-left transition duration-200 ${
+                                      selected
+                                        ? "bg-[#c9a227] text-[#0b3d2e] shadow-sm"
+                                        : "text-text hover:bg-[#c9a227]/15"
+                                    }`}
+                                    onClick={() => onSelectCategory(cat)}
+                                  >
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block text-sm font-semibold leading-snug">{localized(cat.name)}</span>
+                                      {cat.name?.ar ? (
+                                        <span
+                                          className={`mt-0.5 block text-xs ${selected ? "text-[#0b3d2e]/75" : "text-muted"}`}
+                                          dir="rtl"
+                                        >
+                                          {cat.name.ar}
+                                        </span>
+                                      ) : null}
+                                    </span>
+                                    {selected ? <span className="mt-0.5 text-sm font-bold">✓</span> : null}
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : categoryId && mainCategoryId === categoryId ? (
+                          <p className="m-auto px-6 py-12 text-center text-sm font-semibold text-[#17634b]">
+                            Ready — continue to information
+                          </p>
+                        ) : (
+                          <p className="m-auto px-6 py-12 text-center text-sm text-muted">No product types here</p>
+                        )}
+                      </section>
+                    </div>
+                  </div>
+                </div>
               ) : null}
-              <div>
-                <p className="wizard-section-title">Names</p>
-                <div className="wizard-grid wizard-grid--2">
-                  <Field label="Product name (English)" required>
-                    <input className="input-field" value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
-                  </Field>
-                  <Field label="Product name (Arabic)">
-                    <input className="input-field" dir="rtl" value={nameAr} onChange={(e) => setNameAr(e.target.value)} />
-                  </Field>
+
+              {step === 1 ? (
+                <div className="space-y-6">
+                  {selectedCategory ? (
+                    <p className="m-0 inline-flex max-w-full items-center gap-2 rounded-xl bg-[#17634b]/08 px-3 py-2 text-xs text-[#17634b]">
+                      <span className="font-bold uppercase tracking-wider text-[#8a6a2f]">Category</span>
+                      <span className="truncate font-semibold text-text">{localized(selectedCategory.name)}</span>
+                    </p>
+                  ) : null}
+                  <div>
+                    <SectionLabel>Names · الأسماء</SectionLabel>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Product name (English)" required>
+                        <input className="input-field" value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
+                      </Field>
+                      <Field label="Product name (Arabic)">
+                        <input className="input-field" dir="rtl" value={nameAr} onChange={(e) => setNameAr(e.target.value)} />
+                      </Field>
+                    </div>
+                  </div>
+                  <div>
+                    <SectionLabel>Identity · الهوية</SectionLabel>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Brand">
+                        <input className="input-field" value={brand} onChange={(e) => setBrand(e.target.value)} />
+                      </Field>
+                      <Field label="Manufacturer">
+                        <input className="input-field" value={manufacturer} onChange={(e) => setManufacturer(e.target.value)} />
+                      </Field>
+                      <Field label="SKU / product code">
+                        <input className="input-field" value={sku} onChange={(e) => setSku(e.target.value)} />
+                      </Field>
+                      <Field label="Model number">
+                        <input className="input-field" value={model} onChange={(e) => setModel(e.target.value)} />
+                      </Field>
+                    </div>
+                  </div>
+                  <div>
+                    <SectionLabel>Details · التفاصيل</SectionLabel>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <Field label="Condition">
+                        <select className="input-field" value={condition} onChange={(e) => setCondition(e.target.value)}>
+                          {CONDITIONS.map((c) => (
+                            <option key={c} value={c}>
+                              {c.replaceAll("_", " ")}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                      <Field label="Country of origin">
+                        <input className="input-field" value={country} onChange={(e) => setCountry(e.target.value)} />
+                      </Field>
+                      <Field label="HS code">
+                        <input className="input-field" value={hsCode} onChange={(e) => setHsCode(e.target.value)} />
+                      </Field>
+                    </div>
+                    <div className="mt-4">
+                      <Field label="Search tags" hint="Comma-separated — helps Saudi buyers find you">
+                        <input
+                          className="input-field"
+                          value={tags}
+                          onChange={(e) => setTags(e.target.value)}
+                          placeholder="excavator, loader, construction"
+                        />
+                      </Field>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <p className="wizard-section-title">Identity</p>
-                <div className="wizard-grid wizard-grid--2">
-                  <Field label="Brand">
-                    <input className="input-field" value={brand} onChange={(e) => setBrand(e.target.value)} />
-                  </Field>
-                  <Field label="Manufacturer">
-                    <input className="input-field" value={manufacturer} onChange={(e) => setManufacturer(e.target.value)} />
-                  </Field>
-                  <Field label="SKU / product code">
-                    <input className="input-field" value={sku} onChange={(e) => setSku(e.target.value)} />
-                  </Field>
-                  <Field label="Model number">
-                    <input className="input-field" value={model} onChange={(e) => setModel(e.target.value)} />
-                  </Field>
-                </div>
-              </div>
-              <div>
-                <p className="wizard-section-title">Details</p>
-                <div className="wizard-grid wizard-grid--3">
-                  <Field label="Condition">
-                    <select className="input-field" value={condition} onChange={(e) => setCondition(e.target.value)}>
-                      {CONDITIONS.map((c) => (
-                        <option key={c} value={c}>
-                          {c.replaceAll("_", " ")}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <Field label="Country of origin">
-                    <input className="input-field" value={country} onChange={(e) => setCountry(e.target.value)} />
-                  </Field>
-                  <Field label="HS code">
-                    <input className="input-field" value={hsCode} onChange={(e) => setHsCode(e.target.value)} />
-                  </Field>
-                </div>
-                <div className="mt-4">
-                  <Field label="Search tags" hint="Comma-separated keywords buyers may search">
+              ) : null}
+
+              {step === 2 ? (
+                <div className="grid max-w-3xl gap-4">
+                  <Field label="Short description" hint={`${(shortDesc || "").length}/200`}>
                     <input
                       className="input-field"
-                      value={tags}
-                      onChange={(e) => setTags(e.target.value)}
-                      placeholder="excavator, loader, construction"
+                      value={shortDesc}
+                      onChange={(e) => setShortDesc(e.target.value)}
+                      maxLength={200}
+                    />
+                  </Field>
+                  <Field label="Full description">
+                    <textarea className="input-field min-h-36" value={descEn} onChange={(e) => setDescEn(e.target.value)} />
+                  </Field>
+                  <Field label="Applications / use cases">
+                    <textarea
+                      className="input-field min-h-24"
+                      value={applications}
+                      onChange={(e) => setApplications(e.target.value)}
                     />
                   </Field>
                 </div>
-              </div>
-            </div>
-          ) : null}
-
-          {step === 2 ? (
-            <div className="wizard-grid max-w-3xl">
-              <Field label="Short description" hint={`${(shortDesc || "").length}/200`}>
-                <input
-                  className="input-field"
-                  value={shortDesc}
-                  onChange={(e) => setShortDesc(e.target.value)}
-                  maxLength={200}
-                />
-              </Field>
-              <Field label="Full description">
-                <textarea className="input-field min-h-36" value={descEn} onChange={(e) => setDescEn(e.target.value)} />
-              </Field>
-              <Field label="Applications / use cases">
-                <textarea
-                  className="input-field min-h-24"
-                  value={applications}
-                  onChange={(e) => setApplications(e.target.value)}
-                />
-              </Field>
-            </div>
-          ) : null}
-
-          {step === 3 ? (
-            <div className="space-y-6">
-              <div>
-                <p className="wizard-section-title">Category specifications</p>
-                {schemaLoading ? (
-                  <p className="text-sm text-muted">Loading…</p>
-                ) : (
-                  <DynamicAttributeFields
-                    attributes={specAttributes}
-                    values={attributes}
-                    errors={attrErrors}
-                    onChange={(key, val) => setAttributes((prev) => ({ ...prev, [key]: val }))}
-                  />
-                )}
-              </div>
-              <div>
-                <p className="wizard-section-title">Custom specifications</p>
-                <p className="mb-3 mt-0 text-xs text-muted">Optional key / value rows (color, material, voltage…).</p>
-                <KeyValueEditor rows={customSpecs} onChange={setCustomSpecs} />
-              </div>
-            </div>
-          ) : null}
-
-          {step === 4 ? (
-            <div>
-              <p className="wizard-section-title">Variants</p>
-              <p className="mb-4 mt-0 text-xs text-muted">Optional. Own image, SKU, price, and stock per variant.</p>
-              <VariantEditor variants={variants} onChange={setVariants} productId={draftId} />
-            </div>
-          ) : null}
-
-          {step === 5 ? (
-            <div className="max-w-2xl space-y-4">
-              <label className="flex items-center gap-2 text-sm font-medium text-text">
-                <input type="checkbox" checked={priceOnRequest} onChange={(e) => setPriceOnRequest(e.target.checked)} />
-                Price on request
-              </label>
-              {!priceOnRequest ? (
-                <Field label="Unit price">
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    className="input-field"
-                    value={unitPrice}
-                    onChange={(e) => setUnitPrice(e.target.value)}
-                  />
-                </Field>
               ) : null}
-              <div className="wizard-grid wizard-grid--2">
-                <Field label="Currency">
-                  <select className="input-field" value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                    {CURRENCIES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Unit">
-                  <select className="input-field" value={unit} onChange={(e) => setUnit(e.target.value)}>
-                    {UNITS.map((u) => (
-                      <option key={u} value={u}>
-                        {u}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="MOQ">
-                  <input
-                    type="number"
-                    min="0"
-                    className="input-field"
-                    value={moq}
-                    onChange={(e) => {
-                      const nextMoq = e.target.value;
-                      setMoq(nextMoq);
-                      setError("");
-                      if (
-                        nextMoq !== "" &&
-                        maxOrderQty !== "" &&
-                        Number(maxOrderQty) > 0 &&
-                        Number(nextMoq) > Number(maxOrderQty)
-                      ) {
-                        setMaxOrderQty("");
-                      }
-                    }}
-                  />
-                </Field>
-                <Field label="Max order qty" hint="Blank or ≥ MOQ">
-                  <input
-                    type="number"
-                    min="0"
-                    className="input-field"
-                    value={maxOrderQty}
-                    placeholder="Optional"
-                    onChange={(e) => {
-                      setMaxOrderQty(e.target.value);
-                      setError("");
-                    }}
-                  />
-                </Field>
-                <Field label="Lead time">
-                  <input className="input-field" value={leadTime} onChange={(e) => setLeadTime(e.target.value)} />
-                </Field>
-                <Field label="Availability">
-                  <select className="input-field" value={availability} onChange={(e) => setAvailability(e.target.value)}>
-                    <option value="in_stock">In stock</option>
-                    <option value="made_to_order">Made to order</option>
-                    <option value="limited">Limited</option>
-                    <option value="out_of_stock">Out of stock</option>
-                  </select>
-                </Field>
-              </div>
-              <Field label="Payment terms">
-                <input className="input-field" value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} />
-              </Field>
-              <label className="flex items-center gap-2 text-sm font-medium text-text">
-                <input type="checkbox" checked={sampleAvailable} onChange={(e) => setSampleAvailable(e.target.checked)} />
-                Sample available
-              </label>
-            </div>
-          ) : null}
 
-          {step === 6 ? (
-            <ProductImagesUploader
-              images={productImages}
-              productId={draftId || ""}
-              max={7}
-              onChange={(next) => {
-                setProductImages(next);
-                setError("");
-              }}
-            />
-          ) : null}
+              {step === 3 ? (
+                <div className="space-y-6">
+                  <div>
+                    <SectionLabel>Category specifications</SectionLabel>
+                    {schemaLoading ? (
+                      <p className="text-sm text-muted">Loading…</p>
+                    ) : (
+                      <DynamicAttributeFields
+                        attributes={specAttributes}
+                        values={attributes}
+                        errors={attrErrors}
+                        onChange={(key, val) => setAttributes((prev) => ({ ...prev, [key]: val }))}
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <SectionLabel>Custom specifications</SectionLabel>
+                    <p className="mb-3 mt-0 text-xs text-muted">Optional key / value rows.</p>
+                    <KeyValueEditor rows={customSpecs} onChange={setCustomSpecs} />
+                  </div>
+                </div>
+              ) : null}
 
-          {step === 7 ? (
-            <div className="max-w-xl space-y-4">
-              <label className="flex items-center gap-2 text-sm font-medium text-text">
-                <input type="checkbox" checked={metaAuto} onChange={(e) => setMetaAuto(e.target.checked)} />
-                Auto-generate meta from product name
-              </label>
-              <Field label="Meta title" hint={`${(metaTitle || "").length}/70`}>
-                <input
-                  className="input-field"
-                  value={metaTitle}
-                  onChange={(e) => {
-                    setMetaAuto(false);
-                    setMetaTitle(e.target.value);
+              {step === 4 ? (
+                <div>
+                  <SectionLabel>Variants</SectionLabel>
+                  <p className="mb-4 mt-0 text-xs text-muted">Optional. Own image, SKU, price, and stock per variant.</p>
+                  <VariantEditor variants={variants} onChange={setVariants} productId={draftId} />
+                </div>
+              ) : null}
+
+              {step === 5 ? (
+                <div className="max-w-2xl space-y-4">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-text">
+                    <input type="checkbox" checked={priceOnRequest} onChange={(e) => setPriceOnRequest(e.target.checked)} />
+                    Price on request
+                  </label>
+                  {!priceOnRequest ? (
+                    <Field label="Unit price">
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        className="input-field"
+                        value={unitPrice}
+                        onChange={(e) => setUnitPrice(e.target.value)}
+                      />
+                    </Field>
+                  ) : null}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Currency">
+                      <select className="input-field" value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                        {CURRENCIES.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Unit">
+                      <select className="input-field" value={unit} onChange={(e) => setUnit(e.target.value)}>
+                        {UNITS.map((u) => (
+                          <option key={u} value={u}>
+                            {u}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="MOQ">
+                      <input
+                        type="number"
+                        min="0"
+                        className="input-field"
+                        value={moq}
+                        onChange={(e) => {
+                          const nextMoq = e.target.value;
+                          setMoq(nextMoq);
+                          setError("");
+                          if (
+                            nextMoq !== "" &&
+                            maxOrderQty !== "" &&
+                            Number(maxOrderQty) > 0 &&
+                            Number(nextMoq) > Number(maxOrderQty)
+                          ) {
+                            setMaxOrderQty("");
+                          }
+                        }}
+                      />
+                    </Field>
+                    <Field label="Max order qty" hint="Blank or ≥ MOQ">
+                      <input
+                        type="number"
+                        min="0"
+                        className="input-field"
+                        value={maxOrderQty}
+                        placeholder="Optional"
+                        onChange={(e) => {
+                          setMaxOrderQty(e.target.value);
+                          setError("");
+                        }}
+                      />
+                    </Field>
+                    <Field label="Lead time">
+                      <input className="input-field" value={leadTime} onChange={(e) => setLeadTime(e.target.value)} />
+                    </Field>
+                    <Field label="Availability">
+                      <select className="input-field" value={availability} onChange={(e) => setAvailability(e.target.value)}>
+                        <option value="in_stock">In stock</option>
+                        <option value="made_to_order">Made to order</option>
+                        <option value="limited">Limited</option>
+                        <option value="out_of_stock">Out of stock</option>
+                      </select>
+                    </Field>
+                  </div>
+                  <Field label="Payment terms">
+                    <input className="input-field" value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} />
+                  </Field>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-text">
+                    <input type="checkbox" checked={sampleAvailable} onChange={(e) => setSampleAvailable(e.target.checked)} />
+                    Sample available
+                  </label>
+                </div>
+              ) : null}
+
+              {step === 6 ? (
+                <ProductImagesUploader
+                  images={productImages}
+                  productId={draftId || ""}
+                  max={7}
+                  onChange={(next) => {
+                    setProductImages(next);
+                    setError("");
                   }}
-                  maxLength={70}
                 />
-              </Field>
-              <Field label="Meta description" hint={`${(metaDescription || "").length}/160`}>
-                <textarea
-                  className="input-field min-h-24"
-                  value={metaDescription}
-                  onChange={(e) => {
-                    setMetaAuto(false);
-                    setMetaDescription(e.target.value);
-                  }}
-                  maxLength={160}
-                />
-              </Field>
-              <Field label="Meta keywords">
-                <input className="input-field" value={metaKeywords} onChange={(e) => setMetaKeywords(e.target.value)} />
-              </Field>
-            </div>
-          ) : null}
+              ) : null}
 
-          {step === 8 ? (
-            <div className="max-w-2xl space-y-4 text-sm">
-              <div className="rounded-lg border border-border bg-[var(--bg)] p-4">
-                <h3 className="m-0 font-[family-name:var(--font-head)] text-lg font-semibold text-text">
-                  {nameEn || "Untitled"}
-                </h3>
-                <p className="mt-1 mb-0 text-muted">
-                  {localized(selectedCategory?.name)} · {brand || "No brand"} · {sku || "No SKU"}
-                </p>
-                <p className="mt-3 mb-0 text-text">{shortDesc || descEn || "No description"}</p>
-                {!(productImages || []).some((u) => String(u || "").trim()) ? (
-                  <p className="mt-3 mb-0 text-sm text-danger">Add at least one image before submit.</p>
-                ) : null}
-                <dl className="mt-4 grid gap-2 border-t border-border pt-3 text-muted sm:grid-cols-2">
-                  <div>
-                    <dt className="text-xs uppercase tracking-wide">Specifications</dt>
-                    <dd className="m-0 text-text">
-                      {Object.keys(attributes).length} category ·{" "}
-                      {customSpecs.filter((r) => r.key && r.value).length} custom
-                    </dd>
+              {step === 7 ? (
+                <div className="max-w-xl space-y-4">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-text">
+                    <input type="checkbox" checked={metaAuto} onChange={(e) => setMetaAuto(e.target.checked)} />
+                    Auto-generate meta from product name
+                  </label>
+                  <Field label="Meta title" hint={`${(metaTitle || "").length}/70`}>
+                    <input
+                      className="input-field"
+                      value={metaTitle}
+                      onChange={(e) => {
+                        setMetaAuto(false);
+                        setMetaTitle(e.target.value);
+                      }}
+                      maxLength={70}
+                    />
+                  </Field>
+                  <Field label="Meta description" hint={`${(metaDescription || "").length}/160`}>
+                    <textarea
+                      className="input-field min-h-24"
+                      value={metaDescription}
+                      onChange={(e) => {
+                        setMetaAuto(false);
+                        setMetaDescription(e.target.value);
+                      }}
+                      maxLength={160}
+                    />
+                  </Field>
+                  <Field label="Meta keywords">
+                    <input className="input-field" value={metaKeywords} onChange={(e) => setMetaKeywords(e.target.value)} />
+                  </Field>
+                </div>
+              ) : null}
+
+              {step === 8 ? (
+                <div className="max-w-2xl space-y-4 text-sm">
+                  <div className="overflow-hidden rounded-2xl border border-[#17634b]/20 bg-gradient-to-br from-[#f7faf8] to-white">
+                    <div className="border-b border-[#17634b]/10 bg-[#17634b] px-5 py-4 text-white">
+                      <h3 className="m-0 font-[family-name:var(--font-head)] text-xl font-semibold">
+                        {nameEn || "Untitled"}
+                      </h3>
+                      <p className="mt-1 mb-0 text-sm text-white/75">
+                        {localized(selectedCategory?.name)} · {brand || "No brand"} · {sku || "No SKU"}
+                      </p>
+                    </div>
+                    <div className="p-5">
+                      <p className="m-0 text-text">{shortDesc || descEn || "No description"}</p>
+                      {!(productImages || []).some((u) => String(u || "").trim()) ? (
+                        <p className="mt-3 mb-0 text-sm text-danger">Add at least one image before submit.</p>
+                      ) : null}
+                      <dl className="mt-4 grid gap-3 border-t border-border pt-4 text-muted sm:grid-cols-2">
+                        <div>
+                          <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6a2f]">Specs</dt>
+                          <dd className="m-0 text-text">
+                            {Object.keys(attributes).length} category ·{" "}
+                            {customSpecs.filter((r) => r.key && r.value).length} custom
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6a2f]">Variants</dt>
+                          <dd className="m-0 text-text">{variants.length}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6a2f]">Pricing</dt>
+                          <dd className="m-0 text-text">
+                            {priceOnRequest ? "Price on request" : `${unitPrice || "—"} ${currency} / ${unit}`}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6a2f]">Images</dt>
+                          <dd className="m-0 text-text">
+                            {(productImages || []).filter((u) => String(u || "").trim()).length || 0} / 7
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
                   </div>
-                  <div>
-                    <dt className="text-xs uppercase tracking-wide">Variants</dt>
-                    <dd className="m-0 text-text">{variants.length}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs uppercase tracking-wide">Pricing</dt>
-                    <dd className="m-0 text-text">
-                      {priceOnRequest ? "Price on request" : `${unitPrice || "—"} ${currency} / ${unit}`}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs uppercase tracking-wide">Images</dt>
-                    <dd className="m-0 text-text">
-                      {(productImages || []).filter((u) => String(u || "").trim()).length || 0} / 7
-                    </dd>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <dt className="text-xs uppercase tracking-wide">SEO</dt>
-                    <dd className="m-0 truncate text-text">
-                      {metaTitle || autoMetaTitle(nameEn, brand, localized(selectedCategory?.name))}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-              <p className="m-0 text-muted">
-                Submit sends this product for Super Admin approval. You cannot self-publish.
-              </p>
+                  <p className="m-0 text-muted">Submit sends this for Super Admin approval.</p>
+                </div>
+              ) : null}
             </div>
-          ) : null}
+          </div>
         </div>
       </div>
 
-      <div className="wizard-footer">
-        <div className="wizard-footer__inner">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-md lg:left-[248px]">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
           <button
             type="button"
             className="btn-outline"
@@ -1560,21 +1682,20 @@ export default function NewProductWizardPage() {
           >
             Back
           </button>
-          <span className="wizard-footer__hint">{footerHint}</span>
+          <p className="m-0 hidden text-center text-xs text-muted sm:block">{footerHint}</p>
           {step < STEPS.length - 1 ? (
             <button
               type="button"
-              className="btn-primary"
+              className="btn-primary min-w-[8.5rem]"
               onClick={next}
               disabled={busy || (step === 0 && !categoryId)}
-              title={step === 0 && !categoryId ? "Select a product type first" : undefined}
             >
-              Next
+              Continue
             </button>
           ) : (
             <button
               type="button"
-              className="btn-primary"
+              className="btn-primary min-w-[8.5rem]"
               onClick={onSubmitForReview}
               disabled={busy || Boolean(message)}
             >
