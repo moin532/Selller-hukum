@@ -92,20 +92,22 @@ function autoMetaDescription(shortDesc, desc, name) {
 
 function Field({ label, required, hint, className = "", children }) {
   return (
-    <label className={`flex min-w-0 flex-col gap-1.5 ${className}`.trim()}>
-      <span className="text-[0.72rem] font-semibold tracking-wide text-text">
+    <label className={`flex min-w-0 flex-col gap-2 ${className}`.trim()}>
+      <span className="text-[0.78rem] font-semibold tracking-wide text-text">
         {label}
         {required ? <span className="text-danger"> *</span> : null}
       </span>
       {children}
-      {hint ? <span className="text-[0.7rem] text-muted">{hint}</span> : null}
+      {hint ? <span className="text-[0.72rem] leading-relaxed text-muted">{hint}</span> : null}
     </label>
   );
 }
 
 function SectionLabel({ children }) {
   return (
-    <p className="mb-3 mt-0 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[#8a6a2f]">{children}</p>
+    <p className="mb-4 mt-0 border-b border-[#c9a227]/25 pb-2.5 text-[0.7rem] font-bold uppercase tracking-[0.16em] text-[#8a6a2f]">
+      {children}
+    </p>
   );
 }
 
@@ -1011,60 +1013,60 @@ export default function NewProductWizardPage() {
 
   return (
     <SellerShell title="Add product">
-      <div id="product-wizard-top" className="relative scroll-mt-4 pb-28">
+      <div id="product-wizard-top" className="relative scroll-mt-4 pb-32">
         {/* Premium brand stage */}
-        <section className="relative mb-5 overflow-hidden rounded-2xl border border-[#1a4a38]/25 bg-gradient-to-br from-[#0b3d2e] via-[#145c44] to-[#17634b] text-white shadow-[0_12px_40px_rgba(11,61,46,0.22)]">
+        <section className="relative mb-8 overflow-hidden rounded-2xl border border-[#1a4a38]/20 bg-gradient-to-br from-[#0b3d2e] via-[#145c44] to-[#17634b] text-white">
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.14]"
+            className="pointer-events-none absolute inset-0 opacity-[0.12]"
             style={{
               backgroundImage:
                 "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L60 30L30 60L0 30z' fill='none' stroke='%23c9a227' stroke-width='0.6'/%3E%3C/svg%3E\")",
             }}
             aria-hidden
           />
-          <div className="relative flex flex-wrap items-end justify-between gap-4 px-5 py-6 md:px-7 md:py-7">
+          <div className="relative flex flex-wrap items-end justify-between gap-6 px-6 py-8 md:px-8 md:py-9">
             <div className="max-w-xl">
               <p className="m-0 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[#e8d5a3]">
                 Hukum · المملكة
               </p>
-              <h1 className="mt-2 mb-0 font-[family-name:var(--font-head)] text-3xl font-semibold tracking-tight md:text-4xl">
+              <h1 className="mt-3 mb-0 font-[family-name:var(--font-head)] text-3xl font-semibold tracking-tight md:text-4xl">
                 Add product
               </h1>
-              <p className="mt-1 mb-0 font-[family-name:var(--font-tajawal)] text-lg text-white/85" dir="rtl">
+              <p className="mt-2 mb-0 font-[family-name:var(--font-tajawal)] text-lg text-white/85" dir="rtl">
                 أضف منتجاً إلى السوق
               </p>
-              <p className="mt-3 mb-0 max-w-md text-sm leading-relaxed text-white/75">
+              <p className="mt-4 mb-0 max-w-md text-sm leading-relaxed text-white/75">
                 {stepMeta.blurb}. One calm step at a time — your listing stays draft-safe until you submit.
               </p>
             </div>
-            <div className="flex flex-col items-end gap-2">
-              <div className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-right backdrop-blur-sm">
+            <div className="flex flex-col items-end gap-3">
+              <div className="rounded-xl border border-white/15 bg-white/10 px-5 py-4 text-right backdrop-blur-sm">
                 <p className="m-0 text-[0.65rem] uppercase tracking-wider text-[#e8d5a3]">Progress</p>
-                <p className="m-0 mt-1 font-[family-name:var(--font-head)] text-2xl font-semibold tabular-nums">
+                <p className="m-0 mt-1.5 font-[family-name:var(--font-head)] text-2xl font-semibold tabular-nums">
                   {Math.min(progressPct, 100)}%
                 </p>
-                <p className="m-0 mt-0.5 text-xs text-white/70">
+                <p className="m-0 mt-1 text-xs text-white/70">
                   Step {step + 1} / {STEPS.length}
                   {draftId ? ` · Draft ${String(draftId).slice(-6)}` : ""}
                 </p>
               </div>
-              <div className="flex flex-wrap justify-end gap-1.5">
+              <div className="flex flex-wrap justify-end gap-2">
                 <Link
                   href="/dashboard/products/ai-catalogue"
-                  className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+                  className="rounded-lg px-3.5 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
                 >
                   AI catalogue
                 </Link>
                 <button
                   type="button"
-                  className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+                  className="rounded-lg px-3.5 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
                   onClick={startNewProduct}
                 >
                   Start new
                 </button>
                 <button
                   type="button"
-                  className="rounded-lg bg-[#c9a227]/20 px-3 py-1.5 text-xs font-semibold text-[#f0e2b8] transition hover:bg-[#c9a227]/30"
+                  className="rounded-lg bg-[#c9a227]/25 px-3.5 py-2 text-xs font-semibold text-[#f0e2b8] transition hover:bg-[#c9a227]/35"
                   onClick={saveDraft}
                   disabled={saveState === "saving"}
                 >
@@ -1081,11 +1083,16 @@ export default function NewProductWizardPage() {
           </div>
         </section>
 
-        <div className="grid gap-5 xl:grid-cols-[220px_minmax(0,1fr)]">
-          {/* Journey rail — removes confusion */}
+        <div className="grid gap-8 xl:grid-cols-[240px_minmax(0,1fr)]">
+          {/* Journey rail */}
           <aside className="hidden xl:block">
-            <nav className="sticky top-4 space-y-1 rounded-2xl border border-border bg-card p-3" aria-label="Listing steps">
-              <p className="mb-3 px-2 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-muted">Your path</p>
+            <nav
+              className="sticky top-4 space-y-1.5 rounded-2xl border border-[#17634b]/12 bg-card p-4"
+              aria-label="Listing steps"
+            >
+              <p className="mb-4 px-2 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#8a6a2f]">
+                Your path
+              </p>
               {STEPS.map((s, i) => {
                 const done = i < step;
                 const active = i === step;
@@ -1095,7 +1102,7 @@ export default function NewProductWizardPage() {
                     type="button"
                     disabled={i > step}
                     onClick={() => i <= step && setStep(i)}
-                    className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition ${
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
                       active
                         ? "bg-[#17634b] text-white"
                         : done
@@ -1104,7 +1111,7 @@ export default function NewProductWizardPage() {
                     }`}
                   >
                     <span
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[0.7rem] font-bold ${
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.7rem] font-bold ${
                         active
                           ? "bg-[#c9a227] text-[#0b3d2e]"
                           : done
@@ -1129,48 +1136,50 @@ export default function NewProductWizardPage() {
             </nav>
           </aside>
 
-          <div className="min-w-0 space-y-4">
-            {/* Current step focus */}
-            <div className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4">
-              <div>
-                <p className="m-0 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[#8a6a2f]">
-                  Now working on
-                </p>
-                <h2 className="mt-1 mb-0 font-[family-name:var(--font-head)] text-2xl font-semibold tracking-tight text-text">
-                  {stepMeta.label}
-                </h2>
-                <p className="mt-1 mb-0 font-[family-name:var(--font-tajawal)] text-base text-muted" dir="rtl">
-                  {stepMeta.labelAr}
-                </p>
-              </div>
-              <ol className="m-0 flex list-none gap-1 p-0 xl:hidden">
-                {STEPS.map((s, i) => (
-                  <li key={s.id}>
-                    <button
-                      type="button"
-                      title={s.label}
-                      disabled={i > step}
-                      onClick={() => i <= step && setStep(i)}
-                      className={`h-2 w-2 rounded-full transition ${
-                        i === step ? "bg-[#17634b] scale-125" : i < step ? "bg-[#c9a227]" : "bg-border"
-                      }`}
-                    />
-                  </li>
-                ))}
-              </ol>
-            </div>
-
+          <div className="min-w-0 space-y-6">
             {error ? (
-              <p className="m-0 rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">{error}</p>
+              <p className="m-0 rounded-xl border border-danger/25 bg-danger/5 px-5 py-4 text-sm leading-relaxed text-danger">
+                {error}
+              </p>
             ) : null}
             {message && !error ? (
-              <p className="m-0 rounded-xl border border-gold/30 bg-gold-muted px-4 py-3 text-sm text-gold">{message}</p>
+              <p className="m-0 rounded-xl border border-gold/30 bg-gold-muted px-5 py-4 text-sm leading-relaxed text-gold">
+                {message}
+              </p>
             ) : null}
 
             <div
               key={step}
-              className="animate-[fadeRise_0.35s_ease-out] rounded-2xl border border-border bg-card p-5 md:p-6"
+              className="animate-[fadeRise_0.35s_ease-out] rounded-2xl border border-[#17634b]/12 bg-card p-6 md:p-8"
             >
+              <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-[#c9a227]/20 pb-6">
+                <div>
+                  <p className="m-0 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[#8a6a2f]">
+                    Now working on
+                  </p>
+                  <h2 className="mt-2 mb-0 font-[family-name:var(--font-head)] text-2xl font-semibold tracking-tight text-text md:text-[1.65rem]">
+                    {stepMeta.label}
+                  </h2>
+                  <p className="mt-1.5 mb-0 font-[family-name:var(--font-tajawal)] text-base text-muted" dir="rtl">
+                    {stepMeta.labelAr}
+                  </p>
+                </div>
+                <ol className="m-0 flex list-none gap-1.5 p-0 xl:hidden">
+                  {STEPS.map((s, i) => (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        title={s.label}
+                        disabled={i > step}
+                        onClick={() => i <= step && setStep(i)}
+                        className={`h-2.5 w-2.5 rounded-full transition ${
+                          i === step ? "scale-125 bg-[#17634b]" : i < step ? "bg-[#c9a227]" : "bg-border"
+                        }`}
+                      />
+                    </li>
+                  ))}
+                </ol>
+              </div>
               {step === 0 ? (
                 <div className="space-y-4">
                   <p className="m-0 text-sm text-muted">
@@ -1375,16 +1384,18 @@ export default function NewProductWizardPage() {
               ) : null}
 
               {step === 1 ? (
-                <div className="space-y-6">
+                <div className="space-y-10">
                   {selectedCategory ? (
-                    <p className="m-0 inline-flex max-w-full items-center gap-2 rounded-xl bg-[#17634b]/08 px-3 py-2 text-xs text-[#17634b]">
-                      <span className="font-bold uppercase tracking-wider text-[#8a6a2f]">Category</span>
+                    <p className="m-0 inline-flex max-w-full items-center gap-3 rounded-xl border border-[#17634b]/12 bg-[#17634b]/10 px-4 py-3 text-sm text-[#17634b]">
+                      <span className="shrink-0 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[#8a6a2f]">
+                        Category
+                      </span>
                       <span className="truncate font-semibold text-text">{localized(selectedCategory.name)}</span>
                     </p>
                   ) : null}
                   <div>
                     <SectionLabel>Names · الأسماء</SectionLabel>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
                       <Field label="Product name (English)" required>
                         <input className="input-field" value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
                       </Field>
@@ -1395,7 +1406,7 @@ export default function NewProductWizardPage() {
                   </div>
                   <div>
                     <SectionLabel>Identity · الهوية</SectionLabel>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
                       <Field label="Brand">
                         <input className="input-field" value={brand} onChange={(e) => setBrand(e.target.value)} />
                       </Field>
@@ -1412,7 +1423,7 @@ export default function NewProductWizardPage() {
                   </div>
                   <div>
                     <SectionLabel>Details · التفاصيل</SectionLabel>
-                    <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="grid gap-5 sm:grid-cols-3 sm:gap-6">
                       <Field label="Condition">
                         <select className="input-field" value={condition} onChange={(e) => setCondition(e.target.value)}>
                           {CONDITIONS.map((c) => (
@@ -1429,7 +1440,7 @@ export default function NewProductWizardPage() {
                         <input className="input-field" value={hsCode} onChange={(e) => setHsCode(e.target.value)} />
                       </Field>
                     </div>
-                    <div className="mt-4">
+                    <div className="mt-6">
                       <Field label="Search tags" hint="Comma-separated — helps Saudi buyers find you">
                         <input
                           className="input-field"

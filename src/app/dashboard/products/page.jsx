@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { LayoutGrid, List } from "lucide-react";
 import { SellerShell } from "@/components/layout/SellerShell";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
@@ -202,22 +201,34 @@ export default function ProductsPage() {
 
   return (
     <SellerShell title="Products">
-      <PageHeader
-        title="Products"
-        subtitle="Create manually, import CSV, or build with AI catalogue — same product list."
-        actions={
+      <div className="mb-8 overflow-hidden rounded-2xl border border-[#17634b]/15 bg-gradient-to-br from-[#0b3d2e] via-[#145c44] to-[#17634b] px-6 py-7 text-white md:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <p className="m-0 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-[#e8d5a3]">
+              Hukum · المنتجات
+            </p>
+            <h1 className="mt-2 mb-0 font-[family-name:var(--font-head)] text-3xl font-semibold tracking-tight">
+              Products
+            </h1>
+            <p className="mt-2 mb-0 max-w-lg text-sm leading-relaxed text-white/75">
+              Create manually, import CSV, or build with AI — one catalogue for your storefront.
+            </p>
+          </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/dashboard/products/import" className="rounded-lg border border-border px-3 py-2 text-sm font-semibold">
+            <Link
+              href="/dashboard/products/import"
+              className="rounded-lg border border-white/20 bg-white/5 px-3.5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10"
+            >
               Bulk CSV import
             </Link>
             <Link
               href="/dashboard/products/ai-catalogue"
-              className="rounded-lg border border-border px-3 py-2 text-sm font-semibold"
+              className="rounded-lg border border-white/20 bg-white/5 px-3.5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10"
             >
               AI catalogue
             </Link>
             {verified ? (
-              <Link href="/dashboard/products/new" className="btn-primary">
+              <Link href="/dashboard/products/new" className="rounded-lg bg-[#c9a227] px-3.5 py-2 text-sm font-semibold text-[#0b3d2e] transition hover:bg-[#e8d5a3]">
                 New product
               </Link>
             ) : (
@@ -226,38 +237,42 @@ export default function ProductsPage() {
               </button>
             )}
           </div>
-        }
-      />
-      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        </div>
+      </div>
+
+      <div className="mb-8 grid gap-4 sm:grid-cols-3 sm:gap-5">
         <Link
           href="/dashboard/products/new"
-          className="card block p-4 transition hover:border-gold/40"
+          className="block rounded-2xl border border-[#17634b]/12 bg-card p-5 transition hover:border-[#c9a227]/40"
         >
-          <p className="m-0 text-sm font-semibold text-text">Add product</p>
-          <p className="mt-1 mb-0 text-xs text-muted">Fill the form yourself — name, photos, price.</p>
+          <p className="m-0 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[#8a6a2f]">Manual</p>
+          <p className="mt-2 mb-0 text-base font-semibold text-text">Add product</p>
+          <p className="mt-2 mb-0 text-sm leading-relaxed text-muted">Fill the form yourself — name, photos, price.</p>
         </Link>
         <Link
           href="/dashboard/products/ai-catalogue"
-          className="card block p-4 transition hover:border-gold/40"
+          className="block rounded-2xl border border-[#17634b]/12 bg-card p-5 transition hover:border-[#c9a227]/40"
         >
-          <p className="m-0 text-sm font-semibold text-text">AI catalogue</p>
-          <p className="mt-1 mb-0 text-xs text-muted">Paste text or a list — AI builds product drafts for you.</p>
+          <p className="m-0 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[#8a6a2f]">AI</p>
+          <p className="mt-2 mb-0 text-base font-semibold text-text">AI catalogue</p>
+          <p className="mt-2 mb-0 text-sm leading-relaxed text-muted">Paste text or a list — AI builds drafts for you.</p>
         </Link>
         <Link
           href="/dashboard/products/import"
-          className="card block p-4 transition hover:border-gold/40"
+          className="block rounded-2xl border border-[#17634b]/12 bg-card p-5 transition hover:border-[#c9a227]/40"
         >
-          <p className="m-0 text-sm font-semibold text-text">CSV import</p>
-          <p className="mt-1 mb-0 text-xs text-muted">Upload a spreadsheet of many products at once.</p>
+          <p className="m-0 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[#8a6a2f]">Bulk</p>
+          <p className="mt-2 mb-0 text-base font-semibold text-text">CSV import</p>
+          <p className="mt-2 mb-0 text-sm leading-relaxed text-muted">Upload a spreadsheet of many products at once.</p>
         </Link>
       </div>
       {!verified && vendor ? (
-        <p className="mb-3 text-sm text-gold">{vendorLockMessage(vendor)}</p>
+        <p className="mb-5 text-sm text-gold">{vendorLockMessage(vendor)}</p>
       ) : null}
-      {error ? <p className="mb-3 text-sm text-danger">{error}</p> : null}
-      {message ? <p className="mb-3 text-sm text-gold">{message}</p> : null}
+      {error ? <p className="mb-5 text-sm text-danger">{error}</p> : null}
+      {message ? <p className="mb-5 text-sm text-gold">{message}</p> : null}
 
-      <div className="mb-5 flex flex-wrap items-center gap-3">
+      <div className="mb-7 flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4">
         <input
           className="input-field max-w-xs"
           placeholder="Search name, SKU, brand…"
@@ -280,7 +295,7 @@ export default function ProductsPage() {
           <button
             type="button"
             className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold ${
-              view === "cards" ? "bg-gold/20 text-text" : "bg-card text-muted"
+              view === "cards" ? "bg-[#17634b]/10 text-[#17634b]" : "bg-card text-muted"
             }`}
             onClick={() => setView("cards")}
           >
@@ -289,7 +304,7 @@ export default function ProductsPage() {
           <button
             type="button"
             className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold ${
-              view === "table" ? "bg-gold/20 text-text" : "bg-card text-muted"
+              view === "table" ? "bg-[#17634b]/10 text-[#17634b]" : "bg-card text-muted"
             }`}
             onClick={() => setView("table")}
           >
@@ -341,7 +356,7 @@ export default function ProductsPage() {
       ) : visible.length === 0 ? (
         <EmptyState title="No products" body={`Total from API: ${total}. Create a draft to get started.`} />
       ) : view === "cards" ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {visible.map((p) => (
             <ProductCatalogCard
               key={String(p._id)}
