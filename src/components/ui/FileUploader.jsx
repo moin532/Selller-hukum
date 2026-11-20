@@ -20,6 +20,7 @@ export function FileUploader({
 
   useEffect(() => {
     setPreview(previewUrl || "");
+    setError("");
   }, [previewUrl]);
 
   async function onChange(e) {
@@ -64,7 +65,15 @@ export function FileUploader({
       {preview ? (
         <div className="relative h-36 w-full overflow-hidden rounded-lg border border-border bg-surface">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={preview} alt="" className="h-full w-full object-contain" />
+          <img
+            src={preview}
+            alt=""
+            className="h-full w-full object-contain"
+            onError={() => {
+              // Missing/old media files → clear broken icon; user can re-upload.
+              setPreview("");
+            }}
+          />
           <button
             type="button"
             className="btn-icon absolute end-2 top-2"
@@ -72,6 +81,7 @@ export function FileUploader({
             onClick={() => {
               setPreview("");
               setError("");
+              onUploaded?.(null, null);
             }}
           >
             <X size={14} />
@@ -85,7 +95,7 @@ export function FileUploader({
         onClick={() => inputRef.current?.click()}
       >
         <Upload size={14} />
-        {busy ? "Uploading…" : "Choose file"}
+        {busy ? "Uploading…" : preview ? "Replace file" : "Choose file"}
       </button>
       <input ref={inputRef} type="file" className="hidden" accept={accept} onChange={onChange} />
       <p className="m-0 text-[11px] text-muted">JPG, PNG, or WebP · max 5MB</p>

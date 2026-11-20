@@ -25,7 +25,6 @@ export const SELLER_NAV = [
   { href: "/dashboard/company-profile", label: "Company Profile", labelAr: "ملف الشركة", icon: Building2 },
   { href: "/dashboard/verification", label: "Verification", labelAr: "التحقق", icon: ShieldCheck },
   { href: "/dashboard/products", label: "Products", labelAr: "المنتجات", icon: Package },
-  { href: "/dashboard/products/ai-catalogue", label: "AI catalogue", labelAr: "كتالوج الذكاء", icon: Package },
   { href: "/dashboard/catalogue-sync", label: "Catalogue sync", labelAr: "مزامنة الكتالوج", icon: RefreshCw },
   { href: "/dashboard/leads", label: "Leads CRM", labelAr: "إدارة العملاء المحتملين", icon: Users },
   { href: "/dashboard/matched-leads", label: "Matched leads", labelAr: "عملاء مطابقون", icon: Target },

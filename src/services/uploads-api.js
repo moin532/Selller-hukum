@@ -30,7 +30,6 @@ function guessMime(file) {
 /**
  * Multipart upload to Backend /api/uploads.
  * kind: document | product | company_logo | company_cover | category | industry
- * (aliases like product_image are normalized)
  */
 export async function uploadFile({
   kind,
@@ -48,7 +47,6 @@ export async function uploadFile({
 
   const form = new FormData();
   form.append("kind", resolvedKind);
-  // Some browsers send empty MIME — attach a typed Blob when we can guess.
   const mime = guessMime(file);
   if (mime && !file.type) {
     form.append("file", new File([file], file.name, { type: mime }));
@@ -87,11 +85,22 @@ export function firstUploadedFile(data) {
   return null;
 }
 
+/**
+ * Resolve media for <img src>.
+ * Prefer same-origin relative /api/media so nginx/Next rewrite hits Backend (avoids broken hosts).
+ */
 export function mediaAbsoluteUrl(pathOrUrl) {
   if (!pathOrUrl) return "";
+  if (/^blob:|^data:/i.test(pathOrUrl)) return pathOrUrl;
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
 
   const path = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
+
+  // Browser: same-origin for API media (seller.hukum-ksa.com or localhost → proxy)
+  if (typeof window !== "undefined" && (path.startsWith("/api/media") || path.startsWith("/api/"))) {
+    return path;
+  }
+
   const useLocal = process.env.NEXT_PUBLIC_USE_LOCAL_API === "1";
   const fromEnv = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_HUKUM_API_URL || "")
     .trim()

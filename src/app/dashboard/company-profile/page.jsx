@@ -238,7 +238,12 @@ export default function CompanyProfilePage() {
                   kind="company_logo"
                   label="Company logo"
                   previewUrl={vendor?.logo ? mediaAbsoluteUrl(vendor.logo) : ""}
-                  onUploaded={() => load()}
+                  onUploaded={(file) => {
+                    if (file?.url) {
+                      setVendor((v) => (v ? { ...v, logo: file.url } : v));
+                    }
+                    load();
+                  }}
                 />
               </div>
               <div className="rounded-xl border border-dashed border-border bg-surface/40 p-4">
@@ -246,7 +251,12 @@ export default function CompanyProfilePage() {
                   kind="company_cover"
                   label="Cover image"
                   previewUrl={vendor?.coverImage ? mediaAbsoluteUrl(vendor.coverImage) : ""}
-                  onUploaded={() => load()}
+                  onUploaded={(file) => {
+                    if (file?.url) {
+                      setVendor((v) => (v ? { ...v, coverImage: file.url } : v));
+                    }
+                    load();
+                  }}
                 />
               </div>
             </div>

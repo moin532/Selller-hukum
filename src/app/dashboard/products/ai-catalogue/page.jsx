@@ -6,13 +6,10 @@ import { SellerShell } from "@/components/layout/SellerShell";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PlanGate } from "@/components/billing/PlanGate";
 import { apiPost } from "@/lib/api-client";
-
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000").replace(/\/$/, "");
+import { mediaAbsoluteUrl } from "@/services/uploads-api";
 
 function mediaUrl(path) {
-  if (!path) return "";
-  if (/^https?:\/\//i.test(path)) return path;
-  return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+  return mediaAbsoluteUrl(path);
 }
 
 function productsFromResult(result) {

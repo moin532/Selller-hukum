@@ -204,11 +204,17 @@ export default function ProductsPage() {
     <SellerShell title="Products">
       <PageHeader
         title="Products"
-        subtitle="Card view matches how buyers see listings. Publishing still needs Super Admin approval."
+        subtitle="Create manually, import CSV, or build with AI catalogue — same product list."
         actions={
           <div className="flex flex-wrap gap-2">
             <Link href="/dashboard/products/import" className="rounded-lg border border-border px-3 py-2 text-sm font-semibold">
               Bulk CSV import
+            </Link>
+            <Link
+              href="/dashboard/products/ai-catalogue"
+              className="rounded-lg border border-border px-3 py-2 text-sm font-semibold"
+            >
+              AI catalogue
             </Link>
             {verified ? (
               <Link href="/dashboard/products/new" className="btn-primary">
@@ -222,6 +228,29 @@ export default function ProductsPage() {
           </div>
         }
       />
+      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <Link
+          href="/dashboard/products/new"
+          className="card block p-4 transition hover:border-gold/40"
+        >
+          <p className="m-0 text-sm font-semibold text-text">Add product</p>
+          <p className="mt-1 mb-0 text-xs text-muted">Fill the form yourself — name, photos, price.</p>
+        </Link>
+        <Link
+          href="/dashboard/products/ai-catalogue"
+          className="card block p-4 transition hover:border-gold/40"
+        >
+          <p className="m-0 text-sm font-semibold text-text">AI catalogue</p>
+          <p className="mt-1 mb-0 text-xs text-muted">Paste text or a list — AI builds product drafts for you.</p>
+        </Link>
+        <Link
+          href="/dashboard/products/import"
+          className="card block p-4 transition hover:border-gold/40"
+        >
+          <p className="m-0 text-sm font-semibold text-text">CSV import</p>
+          <p className="mt-1 mb-0 text-xs text-muted">Upload a spreadsheet of many products at once.</p>
+        </Link>
+      </div>
       {!verified && vendor ? (
         <p className="mb-3 text-sm text-gold">{vendorLockMessage(vendor)}</p>
       ) : null}

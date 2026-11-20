@@ -17,11 +17,17 @@ function resolveApiBase() {
     return local || "http://127.0.0.1:4000";
   }
 
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1" || host === "seller.hukum-ksa.com") {
+      return "";
+    }
+  }
+
   const fromEnv = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_HUKUM_API_URL || "")
     .trim()
     .replace(/\/$/, "");
 
-  // Ignore empty / localhost leftovers
   if (fromEnv && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(fromEnv)) {
     return fromEnv;
   }

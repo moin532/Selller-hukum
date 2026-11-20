@@ -935,6 +935,9 @@ export default function NewProductWizardPage() {
         }
         actions={
           <div className="flex flex-wrap gap-2">
+            <Link href="/dashboard/products/ai-catalogue" className="btn-outline">
+              Build with AI catalogue
+            </Link>
             <button type="button" className="btn-outline" onClick={startNewProduct}>
               Start new
             </button>

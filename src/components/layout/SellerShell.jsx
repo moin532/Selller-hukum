@@ -137,6 +137,7 @@ export function SellerShell({ title, children }) {
           <div className="ws-group flex flex-col gap-0.5">
             {SELLER_NAV.map((item) => {
               const Icon = item.icon;
+              // Keep Products highlighted for AI catalogue / import / new / edit routes.
               const active =
                 pathname === item.href ||
                 (item.href !== "/dashboard" && pathname.startsWith(item.href));
