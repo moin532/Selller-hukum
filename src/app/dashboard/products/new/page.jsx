@@ -103,6 +103,7 @@ export default function NewProductWizardPage() {
   const [categoryId, setCategoryId] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
   const [industrySearch, setIndustrySearch] = useState("");
+  const [typeSearch, setTypeSearch] = useState("");
   const [formSchema, setFormSchema] = useState(null);
   const [schemaLoading, setSchemaLoading] = useState(false);
 
@@ -370,15 +371,22 @@ export default function NewProductWizardPage() {
 
   const subcategories = useMemo(() => {
     if (!mainCategoryId) return [];
-    return tree.categories
-      .filter(
-        (c) =>
-          idOf(c.parentId) === mainCategoryId &&
-          (c.status || "active") === "active" &&
-          (c.level || 2) >= 2
-      )
-      .sort((a, b) => (a.order || 0) - (b.order || 0) || localized(a.name).localeCompare(localized(b.name)));
-  }, [tree.categories, mainCategoryId]);
+    let list = tree.categories.filter(
+      (c) =>
+        idOf(c.parentId) === mainCategoryId &&
+        (c.status || "active") === "active" &&
+        (c.level || 2) >= 2
+    );
+    if (typeSearch.trim()) {
+      const q = typeSearch.trim().toLowerCase();
+      list = list.filter((c) => {
+        const en = localized(c.name).toLowerCase();
+        const ar = String(c.name?.ar || "").toLowerCase();
+        return en.includes(q) || ar.includes(q);
+      });
+    }
+    return list.sort((a, b) => (a.order || 0) - (b.order || 0) || localized(a.name).localeCompare(localized(b.name)));
+  }, [tree.categories, mainCategoryId, typeSearch]);
 
   const loadSchema = useCallback(async (cat) => {
     const key = categoryKeyOf(cat);
@@ -511,11 +519,7 @@ export default function NewProductWizardPage() {
     return list;
   }, [tree.industries, industrySearch]);
 
-  /** Once a main category with children is chosen, show only the subcategory panel. */
   const showSubcategoryPanel = Boolean(mainCategoryId && subcategories.length > 0);
-
-  // 1 = pick industry, 2 = pick category, 3 = pick product type (leaf)
-  const categoryStage = !industryId ? 1 : !mainCategoryId ? 2 : 3;
 
   async function onSelectMainCategory(cat) {
     if (categoryId && Object.keys(attributes).length) {
@@ -528,15 +532,13 @@ export default function NewProductWizardPage() {
     setCategoryId("");
     setFormSchema(null);
     setAttributes({});
-    // If no subcategories, allow selecting the main category directly and move on.
+    setTypeSearch("");
     const kids = tree.categories.filter(
       (c) => idOf(c.parentId) === id && (c.status || "active") === "active"
     );
     if (kids.length === 0) {
       setCategoryId(id);
       await loadSchema(cat);
-      setMessage(`Category selected: ${localized(cat.name)}. Continuing…`);
-      setTimeout(() => setStep(1), 250);
     }
   }
 
@@ -546,6 +548,7 @@ export default function NewProductWizardPage() {
     setFormSchema(null);
     setAttributes({});
     setCategorySearch("");
+    setTypeSearch("");
     setError("");
     setMessage("");
   }
@@ -564,12 +567,6 @@ export default function NewProductWizardPage() {
     setMessage("");
     setCategoryId(idOf(cat._id));
     await loadSchema(cat);
-    setMessage(`Subcategory selected: ${localized(cat.name)}. Continuing…`);
-    // Advance immediately so the wizard does not feel stuck on category.
-    setTimeout(() => {
-      setMessage("");
-      setStep(1);
-    }, 200);
   }
 
   /** Identity fields already collected in Information — don't ask again in specs. */
@@ -1024,12 +1021,14 @@ export default function NewProductWizardPage() {
             Back
           </button>
           <div className="flex flex-wrap items-center gap-2">
-            {step === 0 && categoryId ? (
-              <span className="text-xs text-gold">
-                Ready: {localized(selectedCategory?.name) || "category selected"}
+            {step === 0 && !categoryId ? (
+              <span className="text-xs text-muted">
+                {!industryId
+                  ? "Start with an industry"
+                  : !mainCategoryId
+                    ? "Choose a category"
+                    : "Choose a product type"}
               </span>
-            ) : step === 0 && showSubcategoryPanel ? (
-              <span className="text-xs text-muted">Pick a subcategory to continue</span>
             ) : null}
             {step < STEPS.length - 1 ? (
               <button
@@ -1060,169 +1059,215 @@ export default function NewProductWizardPage() {
 
       <div className="rounded-xl border border-border bg-card p-5">
         {step === 0 ? (
-          <div className="space-y-5">
-            <div>
-              <h2 className="m-0 text-lg font-semibold text-text">Choose where this product belongs</h2>
-              <p className="mt-1 mb-0 text-sm text-muted">
-                From the Hukum taxonomy: Industry → Category → Product type. Buyers find you by this path.
-              </p>
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="m-0 font-[family-name:var(--font-head)] text-xl font-semibold tracking-tight text-text">
+                  Select category
+                </h2>
+                <p className="mt-1 mb-0 text-sm text-muted">
+                  Pick industry, then category, then product type.
+                </p>
+              </div>
+              {categoryId && selectedCategory ? (
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gold/30 bg-gold-muted px-3 py-2">
+                  <span className="text-xs text-muted">Selected</span>
+                  <span className="max-w-[280px] truncate text-sm font-semibold text-gold">
+                    {localized(selectedCategory.name)}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn-primary !py-1.5 !text-xs"
+                    onClick={() => {
+                      setError("");
+                      setMessage("");
+                      setStep(1);
+                    }}
+                  >
+                    Continue
+                  </button>
+                </div>
+              ) : null}
             </div>
 
-            <ol className="m-0 flex flex-wrap gap-2 p-0 list-none">
-              {[
-                { n: 1, label: "Industry" },
-                { n: 2, label: "Category" },
-                { n: 3, label: "Product type" },
-              ].map((s) => (
-                <li
-                  key={s.n}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                    categoryStage === s.n
-                      ? "border-gold bg-gold-muted text-gold"
-                      : categoryStage > s.n
-                        ? "border-border bg-surface text-text"
-                        : "border-border text-muted"
-                  }`}
-                >
-                  {s.n}. {s.label}
-                </li>
-              ))}
-            </ol>
-
-            {(selectedIndustry || selectedMainCategory || selectedCategory) && (
-              <div className="flex flex-wrap items-center gap-2 rounded-[var(--radius-md)] border border-border bg-surface/70 px-3 py-2 text-sm">
-                <span className="text-xs font-semibold uppercase tracking-wide text-muted">Path</span>
+            {(selectedIndustry || selectedMainCategory) && (
+              <nav className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted" aria-label="Category path">
                 {selectedIndustry ? (
-                  <button type="button" className="chip" onClick={clearIndustry}>
-                    {localized(selectedIndustry.name)} ×
+                  <button type="button" className="font-medium text-text hover:text-gold" onClick={clearIndustry}>
+                    {localized(selectedIndustry.name)}
                   </button>
                 ) : null}
                 {selectedMainCategory ? (
-                  <button type="button" className="chip" onClick={clearMainCategory}>
-                    {localized(selectedMainCategory.name)} ×
-                  </button>
+                  <>
+                    <span aria-hidden>/</span>
+                    <button type="button" className="font-medium text-text hover:text-gold" onClick={clearMainCategory}>
+                      {localized(selectedMainCategory.name)}
+                    </button>
+                  </>
                 ) : null}
                 {selectedCategory && idOf(selectedCategory.parentId) ? (
-                  <span className="chip chip--ok">{localized(selectedCategory.name)}</span>
+                  <>
+                    <span aria-hidden>/</span>
+                    <span className="font-semibold text-gold">{localized(selectedCategory.name)}</span>
+                  </>
                 ) : null}
-              </div>
+              </nav>
             )}
 
-            {categoryStage === 1 ? (
-              <div>
-                <input
-                  className="input-field mb-3 max-w-md"
-                  placeholder="Search industries (e.g. Safety, Food, Construction)…"
-                  value={industrySearch}
-                  onChange={(e) => setIndustrySearch(e.target.value)}
-                />
-                {visibleIndustries.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
-                    No industries match. Try another search.
-                  </p>
-                ) : (
-                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                    {visibleIndustries.map((ind) => (
-                      <button
-                        key={idOf(ind._id)}
-                        type="button"
-                        className="rounded-[var(--radius-md)] border border-border bg-surface px-4 py-3 text-left transition hover:border-gold/50"
-                        onClick={() => {
-                          setIndustryId(idOf(ind._id));
-                          clearMainCategory();
-                          setIndustrySearch("");
-                        }}
-                      >
-                        <p className="m-0 text-sm font-semibold text-text">{localized(ind.name)}</p>
-                        {ind.name?.ar ? <p className="m-0 mt-1 text-xs text-muted" dir="rtl">{ind.name.ar}</p> : null}
-                        {ind.code ? <p className="m-0 mt-1 text-[10px] uppercase tracking-wide text-muted">{ind.code}</p> : null}
-                      </button>
-                    ))}
+            <div className="overflow-hidden rounded-xl border border-border bg-surface">
+              <div className="grid min-h-[420px] lg:grid-cols-3">
+                {/* Industry */}
+                <section className="flex min-h-[280px] flex-col border-b border-border lg:border-b-0 lg:border-r">
+                  <div className="border-b border-border px-3 py-2.5">
+                    <p className="m-0 text-[11px] font-semibold uppercase tracking-wider text-muted">1. Industry</p>
+                    <input
+                      className="input-field mt-2 !py-1.5 !text-sm"
+                      placeholder="Search…"
+                      value={industrySearch}
+                      onChange={(e) => setIndustrySearch(e.target.value)}
+                      aria-label="Search industries"
+                    />
                   </div>
-                )}
-              </div>
-            ) : null}
+                  <ul className="m-0 max-h-[360px] flex-1 list-none overflow-y-auto p-1.5">
+                    {visibleIndustries.length === 0 ? (
+                      <li className="px-3 py-6 text-center text-sm text-muted">No match</li>
+                    ) : (
+                      visibleIndustries.map((ind) => {
+                        const active = industryId === idOf(ind._id);
+                        return (
+                          <li key={idOf(ind._id)}>
+                            <button
+                              type="button"
+                              className={`flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left transition ${
+                                active ? "bg-gold-muted text-gold" : "text-text hover:bg-[var(--bg)]"
+                              }`}
+                              onClick={() => {
+                                if (industryId === idOf(ind._id)) return;
+                                setIndustryId(idOf(ind._id));
+                                clearMainCategory();
+                              }}
+                            >
+                              <span className="min-w-0 flex-1">
+                                <span className="block text-sm font-medium leading-snug">{localized(ind.name)}</span>
+                                {ind.name?.ar ? (
+                                  <span className="mt-0.5 block text-xs text-muted" dir="rtl">
+                                    {ind.name.ar}
+                                  </span>
+                                ) : null}
+                              </span>
+                              <span className={`mt-0.5 shrink-0 text-xs ${active ? "text-gold" : "text-muted"}`}>›</span>
+                            </button>
+                          </li>
+                        );
+                      })
+                    )}
+                  </ul>
+                </section>
 
-            {categoryStage === 2 ? (
-              <div>
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <p className="m-0 text-sm text-muted">
-                    Categories in <strong className="text-text">{localized(selectedIndustry?.name)}</strong>
-                  </p>
-                  <button type="button" className="btn-outline !py-1.5 !text-xs" onClick={clearIndustry}>
-                    Change industry
-                  </button>
-                </div>
-                <input
-                  className="input-field mb-3 max-w-md"
-                  placeholder="Search categories…"
-                  value={categorySearch}
-                  onChange={(e) => setCategorySearch(e.target.value)}
-                />
-                {mainCategories.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
-                    No categories in this industry yet.
-                  </p>
-                ) : (
-                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                    {mainCategories.map((cat) => (
-                      <button
-                        key={idOf(cat._id)}
-                        type="button"
-                        onClick={() => onSelectMainCategory(cat)}
-                        className="rounded-[var(--radius-md)] border border-border bg-surface px-4 py-3 text-left transition hover:border-gold/50"
-                      >
-                        <p className="m-0 text-sm font-semibold text-text">{localized(cat.name)}</p>
-                        {cat.name?.ar ? <p className="m-0 mt-1 text-xs text-muted" dir="rtl">{cat.name.ar}</p> : null}
-                        <p className="m-0 mt-2 text-[11px] text-gold">Choose product type →</p>
-                      </button>
-                    ))}
+                {/* Category */}
+                <section className="flex min-h-[280px] flex-col border-b border-border lg:border-b-0 lg:border-r">
+                  <div className="border-b border-border px-3 py-2.5">
+                    <p className="m-0 text-[11px] font-semibold uppercase tracking-wider text-muted">2. Category</p>
+                    <input
+                      className="input-field mt-2 !py-1.5 !text-sm"
+                      placeholder={industryId ? "Search…" : "Select industry first"}
+                      value={categorySearch}
+                      onChange={(e) => setCategorySearch(e.target.value)}
+                      disabled={!industryId}
+                      aria-label="Search categories"
+                    />
                   </div>
-                )}
-              </div>
-            ) : null}
+                  {!industryId ? (
+                    <p className="m-0 px-4 py-10 text-center text-sm text-muted">Select an industry</p>
+                  ) : mainCategories.length === 0 ? (
+                    <p className="m-0 px-4 py-10 text-center text-sm text-muted">No categories found</p>
+                  ) : (
+                    <ul className="m-0 max-h-[360px] flex-1 list-none overflow-y-auto p-1.5">
+                      {mainCategories.map((cat) => {
+                        const active = mainCategoryId === idOf(cat._id);
+                        return (
+                          <li key={idOf(cat._id)}>
+                            <button
+                              type="button"
+                              className={`flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left transition ${
+                                active ? "bg-gold-muted text-gold" : "text-text hover:bg-[var(--bg)]"
+                              }`}
+                              onClick={() => onSelectMainCategory(cat)}
+                            >
+                              <span className="min-w-0 flex-1">
+                                <span className="block text-sm font-medium leading-snug">{localized(cat.name)}</span>
+                                {cat.name?.ar ? (
+                                  <span className="mt-0.5 block text-xs text-muted" dir="rtl">
+                                    {cat.name.ar}
+                                  </span>
+                                ) : null}
+                              </span>
+                              <span className={`mt-0.5 shrink-0 text-xs ${active ? "text-gold" : "text-muted"}`}>›</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </section>
 
-            {categoryStage === 3 ? (
-              <div id="product-subcategory-block">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <p className="m-0 text-sm text-muted">
-                    Product types in <strong className="text-text">{localized(selectedMainCategory?.name)}</strong>
-                  </p>
-                  <button type="button" className="btn-outline !py-1.5 !text-xs" onClick={clearMainCategory}>
-                    Change category
-                  </button>
-                </div>
-                {showSubcategoryPanel ? (
-                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                    {subcategories.map((cat) => {
-                      const selected = categoryId === idOf(cat._id);
-                      return (
-                        <button
-                          key={idOf(cat._id)}
-                          type="button"
-                          onClick={() => onSelectCategory(cat)}
-                          className={`rounded-[var(--radius-md)] border px-4 py-3 text-left transition ${
-                            selected
-                              ? "border-gold bg-gold-muted ring-1 ring-gold"
-                              : "border-border bg-surface hover:border-gold/50"
-                          }`}
-                        >
-                          <p className="m-0 text-sm font-semibold text-text">{localized(cat.name)}</p>
-                          {cat.name?.ar ? <p className="m-0 mt-1 text-xs text-muted" dir="rtl">{cat.name.ar}</p> : null}
-                          <p className="m-0 mt-2 text-[11px] text-muted">
-                            {selected ? "Selected — opening form…" : "Select to continue"}
-                          </p>
-                        </button>
-                      );
-                    })}
+                {/* Product type */}
+                <section className="flex min-h-[280px] flex-col" id="product-subcategory-block">
+                  <div className="border-b border-border px-3 py-2.5">
+                    <p className="m-0 text-[11px] font-semibold uppercase tracking-wider text-muted">3. Product type</p>
+                    <input
+                      className="input-field mt-2 !py-1.5 !text-sm"
+                      placeholder={mainCategoryId ? "Search…" : "Select category first"}
+                      value={typeSearch}
+                      onChange={(e) => setTypeSearch(e.target.value)}
+                      disabled={!mainCategoryId}
+                      aria-label="Search product types"
+                    />
                   </div>
-                ) : (
-                  <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
-                    No product types under this category. Pick another category.
-                  </p>
-                )}
+                  {!mainCategoryId ? (
+                    <p className="m-0 px-4 py-10 text-center text-sm text-muted">Select a category</p>
+                  ) : showSubcategoryPanel ? (
+                    <ul className="m-0 max-h-[360px] flex-1 list-none overflow-y-auto p-1.5">
+                      {subcategories.map((cat) => {
+                        const selected = categoryId === idOf(cat._id);
+                        return (
+                          <li key={idOf(cat._id)}>
+                            <button
+                              type="button"
+                              className={`flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left transition ${
+                                selected
+                                  ? "bg-gold text-white"
+                                  : "text-text hover:bg-[var(--bg)]"
+                              }`}
+                              onClick={() => onSelectCategory(cat)}
+                            >
+                              <span className="min-w-0 flex-1">
+                                <span className="block text-sm font-medium leading-snug">{localized(cat.name)}</span>
+                                {cat.name?.ar ? (
+                                  <span
+                                    className={`mt-0.5 block text-xs ${selected ? "text-white/80" : "text-muted"}`}
+                                    dir="rtl"
+                                  >
+                                    {cat.name.ar}
+                                  </span>
+                                ) : null}
+                              </span>
+                              {selected ? <span className="mt-0.5 shrink-0 text-xs">✓</span> : null}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : categoryId && mainCategoryId === categoryId ? (
+                    <p className="m-0 px-4 py-10 text-center text-sm text-gold">
+                      This category has no subtypes — ready to continue.
+                    </p>
+                  ) : (
+                    <p className="m-0 px-4 py-10 text-center text-sm text-muted">No product types here</p>
+                  )}
+                </section>
               </div>
-            ) : null}
+            </div>
           </div>
         ) : null}
 
