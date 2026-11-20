@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { OnboardingShell } from "@/components/marketing/OnboardingShell";
 import { FileUploader } from "@/components/ui/FileUploader";
+import { loadExtractedFields } from "@/lib/onboarding-from-docs";
 import { fetchMyVendor, updateMyVendor } from "@/services/company-api";
 import { extractFromFile, extractFromWebsite } from "@/services/onboarding-ai-api";
 import { mediaAbsoluteUrl } from "@/services/uploads-api";
@@ -64,7 +65,7 @@ export default function RegisterCompanyPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function applyExtractedFields(fields) {
+  function applyExtractedFields(fields, { overwriteFilled = false } = {}) {
     if (!fields || typeof fields !== "object") return 0;
     const entries = Object.entries(fields).filter(
       ([key, value]) => key in EMPTY_FORM && value != null && String(value).trim() !== ""
@@ -72,13 +73,29 @@ export default function RegisterCompanyPage() {
     setForm((prev) => {
       const next = { ...prev };
       for (const [key, value] of entries) {
-        next[key] = String(value).trim();
+        const v = String(value).trim();
+        const existing = String(next[key] || "").trim();
+        // Re-read must never wipe a filled business name / email with a worse blank path
+        if (!overwriteFilled && existing) {
+          if (key === "crNumber" && /^\d{10}$/.test(v)) next[key] = v;
+          else if (key === "vatNumber" && /^3\d{13}3$/.test(v)) next[key] = v;
+          else if (key === "email" && /@/.test(v) && !/@/.test(existing)) next[key] = v;
+          else if (
+            (key === "legalNameEn" || key === "legalNameAr" || key === "tradeName") &&
+            v.length > existing.length + 3
+          ) {
+            next[key] = v;
+          }
+          // else keep existing
+        } else {
+          next[key] = v;
+        }
       }
       if (fields.companyType && COMPANY_TYPES.some((t) => t.id === fields.companyType)) {
-        next.companyType = fields.companyType;
+        if (overwriteFilled || !next.companyType) next.companyType = fields.companyType;
       }
       if (fields.region && REGIONS.includes(fields.region)) {
-        next.region = fields.region;
+        if (overwriteFilled || !next.region) next.region = fields.region;
       }
       return next;
     });
@@ -88,43 +105,75 @@ export default function RegisterCompanyPage() {
   useEffect(() => {
     let storedType = "";
     let storedCity = "";
+    let fromDocs = null;
     try {
       storedType = sessionStorage.getItem("kt_onboarding_businessType") || "";
       storedCity = sessionStorage.getItem("kt_onboarding_city") || "";
+      fromDocs = loadExtractedFields();
     } catch {
       /* ignore */
     }
+    const docFields = fromDocs?.fields || {};
+    const docCount = Object.keys(docFields).length;
+
     fetchMyVendor()
       .then((v) => {
         if (!v) return;
+        // Prefer document extract for identity fields (AI read); otherwise keep vendor / fallback.
+        const DOC_FIRST = new Set([
+          "legalNameEn",
+          "legalNameAr",
+          "tradeName",
+          "crNumber",
+          "vatNumber",
+          "address",
+          "email",
+          "phone",
+          "website",
+        ]);
+        const pick = (vendorVal, docKey, fallback = "") => {
+          const a = vendorVal != null && String(vendorVal).trim() !== "" ? String(vendorVal).trim() : "";
+          const b = docFields[docKey] != null && String(docFields[docKey]).trim() !== "" ? String(docFields[docKey]).trim() : "";
+          if (DOC_FIRST.has(docKey)) return b || a || fallback;
+          return a || b || fallback;
+        };
         setForm({
-          legalNameEn: v.legalName?.en || "",
-          legalNameAr: v.legalName?.ar || "",
-          tradeName: v.tradeName || "",
-          companyType: v.companyType || storedType || "trading_company",
-          crNumber: v.crNumber || "",
-          vatNumber: v.vatNumber || "",
-          yearEstablished: v.yearEstablished ? String(v.yearEstablished) : "",
-          website: v.website || "",
-          email: v.email || "",
-          phone: v.phone || "",
-          whatsapp: v.whatsapp || "",
-          country: v.location?.country || "SA",
-          region: v.location?.region || "Riyadh",
-          city: v.location?.city || storedCity || "Riyadh",
-          address: v.location?.address || "",
-          postalCode: v.location?.postalCode || "",
-          descriptionEn: v.description?.en || "",
-          descriptionAr: v.description?.ar || "",
-          marketsServed: (v.marketsServed || []).join(", "),
-          paymentTerms: v.paymentTerms || "",
-          leadTime: v.leadTime || "",
-          moq: v.moq || "",
-          authorizedRep: v.legal?.authorizedRepresentative || "",
+          legalNameEn: pick(v.legalName?.en, "legalNameEn"),
+          legalNameAr: pick(v.legalName?.ar, "legalNameAr"),
+          tradeName: pick(v.tradeName, "tradeName"),
+          companyType: pick(v.companyType, "companyType", storedType || "trading_company"),
+          crNumber: pick(v.crNumber, "crNumber"),
+          vatNumber: pick(v.vatNumber, "vatNumber"),
+          yearEstablished: pick(v.yearEstablished ? String(v.yearEstablished) : "", "yearEstablished"),
+          website: pick(v.website, "website"),
+          email: pick(v.email, "email"),
+          phone: pick(v.phone, "phone"),
+          whatsapp: pick(v.whatsapp, "whatsapp"),
+          country: pick(v.location?.country, "country", "SA"),
+          region: pick(v.location?.region, "region", "Riyadh"),
+          city: pick(v.location?.city, "city", storedCity || "Riyadh"),
+          address: pick(v.location?.address, "address"),
+          postalCode: pick(v.location?.postalCode, "postalCode"),
+          descriptionEn: pick(v.description?.en, "descriptionEn"),
+          descriptionAr: pick(v.description?.ar, "descriptionAr"),
+          marketsServed: pick((v.marketsServed || []).join(", "), "marketsServed"),
+          paymentTerms: pick(v.paymentTerms, "paymentTerms"),
+          leadTime: pick(v.leadTime, "leadTime"),
+          moq: pick(v.moq, "moq"),
+          authorizedRep: pick(v.legal?.authorizedRepresentative, "authorizedRep"),
         });
         setLogo(v.logo || "");
+        if (docCount > 0) {
+          const src = fromDocs?.meta?.sourceFileName || "your documents";
+          setAiMessage(`Pre-filled from ${src}. Review CR, VAT and legal name before saving.`);
+        }
       })
       .catch(() => {
+        if (docCount > 0) {
+          applyExtractedFields(docFields);
+          const src = fromDocs?.meta?.sourceFileName || "your documents";
+          setAiMessage(`Pre-filled from ${src}. Review CR, VAT and legal name before saving.`);
+        }
         setForm((prev) => ({
           ...prev,
           ...(storedType ? { companyType: storedType } : {}),
@@ -224,7 +273,7 @@ export default function RegisterCompanyPage() {
         },
         logo: logo || undefined,
       });
-      router.push("/register/documents");
+      router.push("/register/review");
     } catch (err) {
       setError(err.message || "Save failed");
     } finally {
@@ -233,20 +282,21 @@ export default function RegisterCompanyPage() {
   }
 
   return (
-    <OnboardingShell title="Company profile">
+    <OnboardingShell title="Company basics">
       <form onSubmit={onSave} className="space-y-8">
         <p className="m-0 text-sm text-muted">
-          Complete the details buyers and Super Admin will review. Fields marked * are required to continue.
+          Review details we read from your uploaded documents, then complete anything missing. Fields marked * are
+          required to continue.
         </p>
 
         <section className="space-y-3 rounded-xl border border-gold/30 bg-gold-muted/40 p-4">
           <div className="flex items-start gap-2">
             <Sparkles className="mt-0.5 shrink-0 text-gold" size={18} />
             <div>
-              <h2 className="m-0 text-sm font-semibold text-text">AI auto-fill</h2>
+              <h2 className="m-0 text-sm font-semibold text-text">Filled from your documents</h2>
               <p className="mt-1 mb-0 text-xs text-muted">
-                Paste your company website, or upload a PDF / Excel / image of your company profile — we read it and
-                fill the form. Always review CR and VAT before submitting.
+                We read business name (Arabic + English), VAT/GST, CR, email and contact info from CR, certificates,
+                brochures or images. Re-upload a clearer file below if anything was missed. Always check before saving.
               </p>
             </div>
           </div>
@@ -279,7 +329,7 @@ export default function RegisterCompanyPage() {
             <input
               ref={fileRef}
               type="file"
-              accept=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              accept=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png,.webp,.gif,application/pdf,image/jpeg,image/png,image/webp,image/gif,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               className="hidden"
               onChange={onAiFromFile}
               disabled={aiBusy}
@@ -290,10 +340,10 @@ export default function RegisterCompanyPage() {
               disabled={aiBusy}
               onClick={() => fileRef.current?.click()}
             >
-              {aiBusy ? "Reading file…" : "Upload PDF, Excel or image"}
+              {aiBusy ? "Reading file…" : "Upload brochure, PDF or image"}
             </button>
             <span className="text-xs text-muted">
-              Supports PDF, .xlsx, and clear JPG/PNG photos of CR / company profile
+              CR, VAT/GST, brochure, letterhead or company profile — PDF / JPG / PNG / Excel
             </span>
           </div>
 

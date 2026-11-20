@@ -8,8 +8,8 @@ import { getSellerUser } from "@/lib/session";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
 const STEPS = [
-  { href: "/register/company", label: { en: "Company", ar: "الشركة" } },
   { href: "/register/documents", label: { en: "Documents", ar: "المستندات" } },
+  { href: "/register/company", label: { en: "Company", ar: "الشركة" } },
   { href: "/register/review", label: { en: "Review", ar: "مراجعة" } },
   { href: "/register/submitted", label: { en: "Submitted", ar: "تم الإرسال" } },
 ];

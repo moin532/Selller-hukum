@@ -47,7 +47,7 @@ export function FileUploader({
       const url = mediaAbsoluteUrl(rawUrl);
       setPreview(url);
       if (localUrl) URL.revokeObjectURL(localUrl);
-      onUploaded?.(first, data);
+      onUploaded?.(first, data, file);
     } catch (err) {
       if (localUrl) {
         URL.revokeObjectURL(localUrl);
@@ -98,7 +98,11 @@ export function FileUploader({
         {busy ? "Uploading…" : preview ? "Replace file" : "Choose file"}
       </button>
       <input ref={inputRef} type="file" className="hidden" accept={accept} onChange={onChange} />
-      <p className="m-0 text-[11px] text-muted">JPG, PNG, or WebP · max 5MB</p>
+      <p className="m-0 text-[11px] text-muted">
+        {String(accept || "").includes("pdf")
+          ? "PDF, JPG, PNG, or WebP · brochure / CR / VAT · max 10MB"
+          : "JPG, PNG, or WebP · max 5MB"}
+      </p>
       {error ? <p className="text-xs text-danger">{error}</p> : null}
     </div>
   );

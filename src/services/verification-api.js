@@ -2,6 +2,13 @@ import { apiGet, apiPost } from "@/lib/api-client";
 import { getSellerToken } from "@/lib/session";
 import { apiUrl } from "@/lib/api-client";
 
+/** Documents already uploaded for this seller's company (verification page). */
+export async function fetchMyDocuments() {
+  const { json } = await apiGet("/api/documents?mine=1");
+  if (!json.success) throw new Error(json.message || "Failed to load documents");
+  return Array.isArray(json.data) ? json.data : [];
+}
+
 /** List documents owned by vendor — admin list is not used; seller creates private notes via documents API. */
 export async function createPrivateNote(content, name = "verification-note.txt") {
   const { json } = await apiPost("/api/documents", {

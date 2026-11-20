@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { ImagePlus, AlertTriangle } from "lucide-react";
 import { SellerShell } from "@/components/layout/SellerShell";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PlanGate } from "@/components/billing/PlanGate";
@@ -20,9 +21,16 @@ function productsFromResult(result) {
   return [];
 }
 
+function galleryFor(p) {
+  if (Array.isArray(p.media) && p.media.length) {
+    return p.media.filter((m) => m && m.url);
+  }
+  if (p.imageUrl) return [{ url: p.imageUrl, isPrimary: true }];
+  return [];
+}
+
 /**
- * AI catalogue builder — fresh AI copy + DALL·E images (not stock DB).
- * Seller can request particular edits, then approve → Product drafts.
+ * AI catalogue builder — bilingual drafts + optional AI product photos.
  */
 export default function AiCataloguePage() {
   const [text, setText] = useState("");
@@ -33,7 +41,8 @@ export default function AiCataloguePage() {
   const [created, setCreated] = useState([]);
   const [editNotes, setEditNotes] = useState({});
   const [editingIndex, setEditingIndex] = useState(null);
-  const [generateImages, setGenerateImages] = useState(false);
+  const [imageBusyIndex, setImageBusyIndex] = useState(null);
+  const [generateImages, setGenerateImages] = useState(true);
 
   const products = useMemo(() => productsFromResult(result), [result]);
   const extractionId = result?.extraction?._id || result?.extraction?.id;
@@ -54,9 +63,16 @@ export default function AiCataloguePage() {
       });
       if (!json.success) throw new Error(json.message || "Extract failed");
       setResult(json.data);
+      const rows = productsFromResult(json.data);
+      const failed = rows.filter((p) => p?.specs?.imageGenError || (p?.tags || []).includes("image-gen-failed"));
+      const withPhoto = rows.filter((p) => galleryFor(p).length > 0).length;
       setMsg(
-        json.message ||
-          "AI drafts ready — review, request changes if needed, then approve to save drafts."
+        generateImages
+          ? `Drafts ready · ${withPhoto}/${rows.length} with AI photos${
+              failed.length ? ` · ${failed.length} need retry (use Generate AI photo)` : ""
+            }. Review then approve.`
+          : json.message ||
+              "AI drafts ready — review, request changes if needed, then approve to save drafts."
       );
     } catch (err) {
       setError(err.message || "Failed");
@@ -90,6 +106,27 @@ export default function AiCataloguePage() {
     }
   }
 
+  async function generatePhoto(index) {
+    if (!extractionId) return;
+    setImageBusyIndex(index);
+    setError("");
+    try {
+      const { json } = await apiPost("/api/ai", {
+        action: "generate_product_images",
+        id: extractionId,
+        index,
+        count: 1,
+      });
+      if (!json.success) throw new Error(json.message || "Image generation failed");
+      setResult(json.data);
+      setMsg(`AI photo ready for product #${index + 1}.`);
+    } catch (err) {
+      setError(err.message || "Image generation failed");
+    } finally {
+      setImageBusyIndex(null);
+    }
+  }
+
   async function approve() {
     if (!extractionId) return;
     setBusy(true);
@@ -114,7 +151,7 @@ export default function AiCataloguePage() {
     <SellerShell title="AI catalogue">
       <PageHeader
         title="AI catalogue builder"
-        subtitle="Paste product text → bilingual draft copy, taxonomy categories only, MOQ preserved. AI images are optional placeholders — replace with your photos before publish."
+        subtitle="Paste a buyer-style price list → bilingual drafts + taxonomy match. AI photos are placeholders — replace with your real photos before publish."
         actions={
           <div className="flex flex-wrap gap-2">
             <Link href="/dashboard/products?status=draft" className="btn-outline">
@@ -160,7 +197,9 @@ export default function AiCataloguePage() {
               className="input-field mt-1 min-h-[160px]"
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Custom PET Plastic Bottle 500ml — logo print — Price 2.80 SAR — Discount 2.20 SAR — MOQ 5000"
+              placeholder={`Galvanized cable tray 300 mm — 2.5 mm — HDG — MOQ 50 pcs — 85 SAR
+Perforated cable tray 100x50 mm — 1.2 mm — MOQ 100 — 42 SAR
+Hot-dip safety barrier with foot board — MOQ 20 — 320 SAR`}
             />
           </label>
           <label className="flex items-start gap-2 text-sm text-muted">
@@ -172,19 +211,22 @@ export default function AiCataloguePage() {
               disabled={busy}
             />
             <span>
-              Also generate AI placeholder photos (marked as AI — replace with seller photos before
-              publish). Off by default.
+              Generate AI product photos (1 per item, first 4 products). Takes ~20–30s each. You can
+              retry any failed photo on the card.
             </span>
           </label>
           <button type="submit" className="btn-primary" disabled={busy || !text.trim()}>
-            {busy && editingIndex == null
-              ? "Building drafts…"
+            {busy && editingIndex == null && imageBusyIndex == null
+              ? generateImages
+                ? "Building drafts + AI photos… (may take a minute)"
+                : "Building drafts…"
               : generateImages
-                ? "Build with AI placeholder images"
+                ? "Build with AI photos"
                 : "Build drafts (no AI photos)"}
           </button>
           <p className="m-0 text-xs text-muted">
-            Categories are matched to the live taxonomy only. MOQ from your text is kept.
+            Categories match the live taxonomy. MOQ from your text is kept. AI photos are placeholders
+            only.
           </p>
         </form>
 
@@ -207,10 +249,7 @@ export default function AiCataloguePage() {
               <div className="grid gap-5 lg:grid-cols-2">
                 {products.map((p, i) => {
                   const name = p.nameEn || p.name || p.title || `Product ${i + 1}`;
-                  const gallery =
-                    Array.isArray(p.media) && p.media.length
-                      ? p.media
-                      : [{ url: p.imageUrl || "/products/default.jpg", isPrimary: true }];
+                  const gallery = galleryFor(p);
                   const price = p.price != null ? Number(p.price) : null;
                   const retail = p.retailPrice != null ? Number(p.retailPrice) : null;
                   const currency = p.currency || "SAR";
@@ -224,6 +263,8 @@ export default function AiCataloguePage() {
                     : extractionId
                       ? `/dashboard/products/ai-catalogue/preview?id=${encodeURIComponent(extractionId)}&index=${i}`
                       : null;
+                  const imageErr = p.specs?.imageGenError;
+                  const needsPhoto = !gallery.length;
 
                   return (
                     <article
@@ -231,24 +272,37 @@ export default function AiCataloguePage() {
                       className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
                     >
                       <div className="grid grid-cols-3 gap-1 bg-[#f3f5f7] p-1">
-                        {gallery.slice(0, 3).map((m, mi) => (
-                          <div
-                            key={`${m.url}-${mi}`}
-                            className="aspect-square overflow-hidden rounded-lg bg-white"
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={mediaUrl(m.url)}
-                              alt={m.alt?.en || name}
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.src = mediaUrl("/products/default.jpg");
-                              }}
-                            />
+                        {gallery.length ? (
+                          gallery.slice(0, 3).map((m, mi) => (
+                            <div
+                              key={`${m.url}-${mi}`}
+                              className="aspect-square overflow-hidden rounded-lg bg-white"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={mediaUrl(m.url)}
+                                alt={m.alt?.en || name}
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.opacity = "0.25";
+                                }}
+                              />
+                            </div>
+                          ))
+                        ) : (
+                          <div className="col-span-3 flex aspect-[3/1] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-white px-4 text-center">
+                            <ImagePlus className="text-muted" size={22} aria-hidden />
+                            <p className="m-0 text-xs text-muted">No product photo yet</p>
                           </div>
-                        ))}
+                        )}
                       </div>
                       <div className="space-y-2.5 p-4">
+                        {imageErr ? (
+                          <p className="m-0 flex items-start gap-1.5 rounded-lg bg-[#fef3f0] px-2.5 py-2 text-xs text-danger">
+                            <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden />
+                            <span>{String(imageErr).slice(0, 180)}</span>
+                          </p>
+                        ) : null}
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-full bg-[#f3f5f7] px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted">
                             {p.sku || "Draft"}
@@ -266,8 +320,9 @@ export default function AiCataloguePage() {
                             </span>
                           ) : null}
                           <span className="rounded-full bg-[#f3f5f7] px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted">
-                            {gallery.length} images · {p.source || "ai"}
-                            {gallery.some((m) => m.aiGenerated) ? " · AI placeholders" : ""}
+                            {gallery.length
+                              ? `${gallery.length} AI photo${gallery.length === 1 ? "" : "s"}`
+                              : "No photo"}
                           </span>
                         </div>
                         <h3 className="m-0 text-base font-semibold text-ink">
@@ -317,6 +372,21 @@ export default function AiCataloguePage() {
 
                         {canEdit ? (
                           <div className="space-y-2 rounded-xl border border-border bg-white p-3">
+                            {(needsPhoto || imageErr) && (
+                              <button
+                                type="button"
+                                className="btn-primary inline-flex w-full items-center justify-center gap-2"
+                                disabled={busy || imageBusyIndex != null}
+                                onClick={() => generatePhoto(i)}
+                              >
+                                <ImagePlus size={16} aria-hidden />
+                                {imageBusyIndex === i
+                                  ? "Generating AI photo… (~25s)"
+                                  : needsPhoto
+                                    ? "Generate AI photo"
+                                    : "Retry AI photo"}
+                              </button>
+                            )}
                             <label className="block text-xs text-muted">
                               Ask for particular changes (this product only)
                               <textarea
@@ -325,7 +395,7 @@ export default function AiCataloguePage() {
                                 onChange={(e) =>
                                   setEditNotes((prev) => ({ ...prev, [i]: e.target.value }))
                                 }
-                                placeholder='e.g. "make the bottle blue", "regenerate image 2", "shorter SEO title", "price 2.50 SAR"'
+                                placeholder='e.g. "make the tray blue", "regenerate image", "shorter SEO title", "price 2.50 SAR"'
                                 disabled={busy}
                               />
                             </label>

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { t } from "@/lib/marketing-i18n";
 import { registerSeller } from "@/services/auth-api";
@@ -32,14 +31,11 @@ export function RegisterCard() {
   const [name, setName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [mobile, setMobile] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
-  const [company, setCompany] = useState("");
   const [city, setCity] = useState("Riyadh");
   const [cityOther, setCityOther] = useState("");
   const [businessType, setBusinessType] = useState("trading_company");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -55,12 +51,8 @@ export function RegisterCard() {
       setError(lang === "ar" ? "البريد وكلمة مرور من ٨ أحرف مطلوبة" : "Email and password (min 8) are required");
       return;
     }
-    if (password !== confirm) {
-      setError(lang === "ar" ? "كلمتا المرور غير متطابقتين" : "Passwords do not match");
-      return;
-    }
-    if (!name.trim() || !company.trim()) {
-      setError(lang === "ar" ? "الاسم واسم الشركة مطلوبان" : "Name and company are required");
+    if (!name.trim()) {
+      setError(lang === "ar" ? "الاسم مطلوب" : "Full name is required");
       return;
     }
     if (!mobile.trim() || mobile.trim().length < 9) {
@@ -69,27 +61,24 @@ export function RegisterCard() {
     }
 
     const phone = toE164(mobile);
-    const wa = toE164(whatsapp) || phone;
     const resolvedCity = city === "Other" ? cityOther.trim() || "Other" : city;
 
     setBusy(true);
     try {
+      // Company / business name is filled next from uploaded documents (AI read)
       await registerSeller({
         email: email.trim(),
         password,
         name: name.trim(),
-        companyName: company.trim(),
         mobile: phone,
         preferredLanguage: lang,
       });
 
       try {
         await updateMyVendor({
-          legalName: { en: company.trim(), ar: "" },
-          tradeName: company.trim(),
           email: email.trim(),
           phone,
-          whatsapp: wa,
+          whatsapp: phone,
           companyType: businessType,
           location: { city: resolvedCity, country: "SA" },
           legal: {
@@ -108,7 +97,7 @@ export function RegisterCard() {
         /* ignore */
       }
 
-      router.replace("/register/company");
+      router.replace("/register/documents");
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
@@ -123,7 +112,6 @@ export function RegisterCard() {
           {lang === "ar" ? "الخطوة ١ من ٤ — إنشاء الحساب" : "Step 1 of 4 — Create account"}
         </p>
         <h2 className="seller-reg-card__title">{t(lang, "regTitle")}</h2>
-        <p className="seller-reg-card__sub">{t(lang, "regSubtitle")}</p>
         <ol className="seller-reg-steps" aria-hidden>
           <li className="is-active">1</li>
           <li>2</li>
@@ -132,8 +120,8 @@ export function RegisterCard() {
         </ol>
         <p className="seller-reg-steps__labels">
           <span>{lang === "ar" ? "الحساب" : "Account"}</span>
-          <span>{lang === "ar" ? "الشركة" : "Company"}</span>
           <span>{lang === "ar" ? "المستندات" : "Documents"}</span>
+          <span>{lang === "ar" ? "الشركة" : "Company"}</span>
           <span>{lang === "ar" ? "مراجعة" : "Review"}</span>
         </p>
       </div>
@@ -163,7 +151,7 @@ export function RegisterCard() {
             />
           </label>
           <label className="seller-reg-field">
-            {t(lang, "fieldMobile")} *
+            {lang === "ar" ? "الجوال / واتساب *" : "Mobile / WhatsApp *"}
             <div className="seller-reg-phone">
               <span>+966</span>
               <input
@@ -178,36 +166,22 @@ export function RegisterCard() {
               />
             </div>
           </label>
-          <label className="seller-reg-field seller-reg-field--full">
-            {t(lang, "fieldWhatsapp")}
-            <div className="seller-reg-phone">
-              <span>+966</span>
-              <input
-                className="input-field"
-                inputMode="tel"
-                placeholder={lang === "ar" ? "اختياري — نفس الجوال إن تُرك فارغاً" : "Optional — uses mobile if blank"}
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value.replace(/[^\d]/g, "").slice(0, 9))}
-                disabled={busy}
-              />
-            </div>
-          </label>
         </div>
+        <p className="seller-reg-hint">
+          {lang === "ar"
+            ? "نستخدم نفس الرقم لواتساب. يمكنك تغييره لاحقاً من الملف الشخصي."
+            : "We use this number for WhatsApp too. You can change it later in your profile."}
+        </p>
       </fieldset>
 
       <fieldset className="seller-reg-section">
         <legend>{t(lang, "secCompany")}</legend>
+        <p className="seller-reg-hint">
+          {lang === "ar"
+            ? "اسم الشركة يُقرأ تلقائياً من مستنداتك في الخطوة التالية (السجل / الضريبة / البروشور)."
+            : "Company / business name is read automatically from your documents in the next step (CR, VAT/GST, or brochure)."}
+        </p>
         <div className="seller-reg-grid">
-          <label className="seller-reg-field seller-reg-field--full">
-            {t(lang, "fieldCompany")} *
-            <input
-              className="input-field"
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              required
-              disabled={busy}
-            />
-          </label>
           <label className="seller-reg-field">
             {t(lang, "fieldCity")} *
             <select className="input-field" value={city} onChange={(e) => setCity(e.target.value)} disabled={busy}>
@@ -228,12 +202,7 @@ export function RegisterCard() {
                 disabled={busy}
               />
             </label>
-          ) : (
-            <label className="seller-reg-field">
-              {t(lang, "fieldCountry")}
-              <input className="input-field" value="Saudi Arabia" disabled />
-            </label>
-          )}
+          ) : null}
         </div>
         <p className="seller-reg-hint">{t(lang, "fieldBusinessType")}</p>
         <div className="seller-reg-types">
@@ -272,7 +241,7 @@ export function RegisterCard() {
               disabled={busy}
             />
           </label>
-          <label className="seller-reg-field">
+          <label className="seller-reg-field seller-reg-field--full">
             {t(lang, "fieldPassword")} *
             <input
               className="input-field"
@@ -283,19 +252,7 @@ export function RegisterCard() {
               minLength={8}
               autoComplete="new-password"
               disabled={busy}
-            />
-          </label>
-          <label className="seller-reg-field">
-            {t(lang, "fieldConfirmPassword")} *
-            <input
-              className="input-field"
-              type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-              disabled={busy}
+              placeholder={lang === "ar" ? "٨ أحرف على الأقل" : "At least 8 characters"}
             />
           </label>
         </div>
@@ -319,14 +276,9 @@ export function RegisterCard() {
             ? "جارٍ إنشاء الحساب…"
             : "Creating account…"
           : lang === "ar"
-            ? "متابعة إلى ملف الشركة"
-            : "Continue to company profile"}
+            ? "متابعة لرفع المستندات"
+            : "Continue to upload documents"}
       </button>
-
-      <p className="seller-reg-login">
-        {lang === "ar" ? "لديك حساب؟" : "Already a seller?"}{" "}
-        <Link href="/login">{t(lang, "navLogin")}</Link>
-      </p>
     </form>
   );
 }

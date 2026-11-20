@@ -2,9 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, MessageCircle, RefreshCw } from "lucide-react";
+import {
+  ExternalLink,
+  Inbox,
+  MessageCircle,
+  Phone,
+  RefreshCw,
+  Sparkles,
+  Target,
+  Users,
+} from "lucide-react";
 import { SellerShell } from "@/components/layout/SellerShell";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { fetchVendorInquiries, updateInquiryStatus } from "@/services/inquiries-api";
 import { apiGet } from "@/lib/api-client";
@@ -14,6 +22,16 @@ const NOTES_KEY = "kt_leads_crm_notes";
 const STAGE_KEY = "kt_leads_crm_stages";
 const CRM_STAGES = ["new", "contacted", "qualified", "quoted", "won", "lost", "follow_up"];
 
+const STAGE_TONE = {
+  new: "bg-emerald-500/15 text-emerald-800 border-emerald-500/25",
+  contacted: "bg-sky-500/15 text-sky-800 border-sky-500/25",
+  qualified: "bg-violet-500/15 text-violet-800 border-violet-500/25",
+  quoted: "bg-amber-500/15 text-amber-900 border-amber-500/30",
+  won: "bg-gold-muted text-gold border-gold/30",
+  lost: "bg-rose-500/10 text-rose-700 border-rose-500/25",
+  follow_up: "bg-orange-500/15 text-orange-900 border-orange-500/25",
+};
+
 function loadMap(key) {
   try {
     return JSON.parse(localStorage.getItem(key) || "{}");
@@ -22,7 +40,6 @@ function loadMap(key) {
   }
 }
 
-/** Map RFQ/server statuses onto CRM pipeline stages (accept → Won). */
 function mapCrmStage(rawStatus, override) {
   if (override && CRM_STAGES.includes(override)) return override;
   const s = String(rawStatus || "").toLowerCase();
@@ -58,6 +75,7 @@ export default function LeadsCrmPage() {
   const [notes, setNotes] = useState({});
   const [stages, setStages] = useState({});
   const [expanded, setExpanded] = useState("");
+  const [showGuide, setShowGuide] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -138,16 +156,29 @@ export default function LeadsCrmPage() {
     return rows;
   }, [inquiries, rfqs, tab, stages]);
 
+  const pipeline = useMemo(() => {
+    const all = [
+      ...inquiries.map((i) => mapCrmStage(i.status || i.crmStage || "new", stages[`inq-${i._id}`])),
+      ...rfqs.map((r) => mapCrmStage(r.crmStage || r.status || "open", stages[`rfq-${r._id}`])),
+    ];
+    return CRM_STAGES.map((s) => ({
+      id: s,
+      label: s.replace(/_/g, " "),
+      count: all.filter((x) => x === s).length,
+    }));
+  }, [inquiries, rfqs, stages]);
+
   const stats = useMemo(
     () => [
-      { label: "Total", value: inquiries.length + rfqs.length },
-      { label: "Website / unlock", value: inquiries.length },
-      { label: "RFQ invites", value: rfqs.length },
+      { label: "All leads", value: inquiries.length + rfqs.length, icon: Users },
+      { label: "Website / unlock", value: inquiries.length, icon: Phone },
+      { label: "RFQ invites", value: rfqs.length, icon: Inbox },
       {
         label: "Needs action",
         value: unified.filter((r) =>
           ["new", "invited", "open", "matching", "follow_up", "reviewing"].includes(r.stage)
         ).length,
+        icon: Target,
       },
     ],
     [inquiries.length, rfqs.length, unified]
@@ -178,69 +209,133 @@ export default function LeadsCrmPage() {
   }
 
   return (
-    <SellerShell title="Leads CRM">
-      <PageHeader
-        title="Leads CRM"
-        subtitle="Leads from the marketplace website, contact unlocks, heart interest, and RFQ invites."
-        actions={
-          <div className="flex flex-wrap gap-2">
+    <SellerShell title="Leads">
+      <section className="relative mb-6 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-[#0f3d2e] via-[#17634b] to-[#1a4d3a] px-5 py-6 text-white sm:px-7 sm:py-7">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 20%, #c9a962 0, transparent 40%), radial-gradient(circle at 80% 0%, #fff 0, transparent 28%)",
+          }}
+          aria-hidden
+        />
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-xl">
+            <p className="m-0 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f0e2c0]">
+              <Sparkles size={12} aria-hidden /> Pipeline
+            </p>
+            <h1 className="mt-3 mb-0 text-2xl font-semibold tracking-tight sm:text-[1.75rem]">Leads</h1>
+            <p className="mt-2 mb-0 text-sm leading-relaxed text-white/80">
+              Contact unlocks, product interest, and RFQ invites — move each buyer through your pipeline.
+            </p>
+          </div>
+          <div className="relative flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => void load()}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-semibold"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-white/15"
             >
               <RefreshCw size={14} />
               Refresh
             </button>
             <Link
               href="/dashboard/matched-leads"
-              className="rounded-lg border border-border px-3 py-2 text-sm font-semibold"
+              className="rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-sm font-semibold text-white hover:bg-white/15"
             >
-              Matched leads
+              Matched
             </Link>
             <Link
               href="/dashboard/inbox"
-              className="rounded-lg bg-gold px-3 py-2 text-sm font-semibold text-white"
+              className="rounded-xl bg-[#c9a962] px-3 py-2 text-sm font-semibold text-[#1a2e24] hover:bg-[#d4b56e]"
             >
               Quote Inbox
             </Link>
           </div>
-        }
-      />
+        </div>
+      </section>
 
-      <div className="mb-5 rounded-xl border border-border bg-card p-4 text-sm">
-        <p className="m-0 font-semibold text-text">How leads arrive from the client website</p>
-        <ul className="mt-2 mb-0 list-disc space-y-1 ps-5 text-muted">
-          <li>
-            <strong className="text-text">Contact unlock</strong> — buyer reveals your phone/WhatsApp on a
-            product or storefront page → appears here as “Contact unlock”.
-          </li>
-          <li>
-            <strong className="text-text">Heart interest</strong> — buyer taps interest + OTP on a product →
-            “Heart interest”.
-          </li>
-          <li>
-            <strong className="text-text">Product inquiry / form</strong> — request-quote or contact form with
-            your vendor id → inquiry row.
-          </li>
-          <li>
-            <strong className="text-text">RFQ invite</strong> — buyer RFQ matched to your category → RFQ
-            invite tab / Open RFQ.
-          </li>
-        </ul>
-      </div>
-
-      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-xl border border-border bg-card px-4 py-3">
-            <p className="m-0 text-[10px] uppercase tracking-wide text-muted">{s.label}</p>
-            <p className="mt-1 mb-0 text-xl font-semibold text-text">{s.value}</p>
+          <div
+            key={s.label}
+            className="rounded-2xl border border-border bg-card p-4 shadow-[0_8px_24px_-18px_rgba(16,37,28,0.35)]"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <p className="m-0 text-[11px] font-semibold uppercase tracking-wide text-muted">{s.label}</p>
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-gold-muted text-gold">
+                <s.icon size={15} aria-hidden />
+              </span>
+            </div>
+            <p className="mt-2 mb-0 text-2xl font-semibold tracking-tight text-text">{s.value}</p>
           </div>
         ))}
       </div>
 
+      <div className="mb-5 overflow-x-auto pb-1">
+        <div className="flex min-w-max gap-2">
+          {pipeline.map((p) => (
+            <div
+              key={p.id}
+              className={`rounded-xl border px-3 py-2 ${STAGE_TONE[p.id] || "border-border bg-card text-muted"}`}
+            >
+              <p className="m-0 text-[10px] font-semibold uppercase tracking-wide opacity-80">{p.label}</p>
+              <p className="mt-0.5 mb-0 text-lg font-semibold tabular-nums">{p.count}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          {[
+            ["all", "All"],
+            ["action", "Needs action"],
+            ["reveal", "Unlocks"],
+            ["wa", "WhatsApp"],
+            ["inquiry", "Inquiries"],
+            ["rfq", "RFQs"],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
+                tab === id
+                  ? "border-gold bg-gold text-white shadow-sm"
+                  : "border-border bg-card text-muted hover:border-gold/40 hover:text-text"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="text-xs font-semibold text-gold"
+          onClick={() => setShowGuide((v) => !v)}
+        >
+          {showGuide ? "Hide guide" : "How leads arrive"}
+        </button>
+      </div>
+
+      {showGuide ? (
+        <div className="mb-5 rounded-2xl border border-gold/20 bg-gold-muted/40 px-4 py-3 text-sm text-muted">
+          <ul className="m-0 list-disc space-y-1 ps-5">
+            <li>
+              <strong className="text-text">Contact unlock</strong> — buyer reveals phone on a product or storefront.
+            </li>
+            <li>
+              <strong className="text-text">Heart interest</strong> — buyer taps interest + OTP on a product.
+            </li>
+            <li>
+              <strong className="text-text">RFQ invite</strong> — matched buyer request in your category.
+            </li>
+          </ul>
+        </div>
+      ) : null}
+
       {reminders.some((r) => r.type === "buyer_question_pending") ? (
-        <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
+        <div className="mb-4 rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm">
           <p className="m-0 font-semibold text-text">Awaiting your reply</p>
           <p className="mt-1 mb-0 text-xs text-muted">
             Buyer clarifying questions are pending — respond from Quote Inbox or the RFQ thread.
@@ -253,11 +348,11 @@ export default function LeadsCrmPage() {
           {reminders.slice(0, 6).map((r) => (
             <div
               key={r.id}
-              className={`rounded-xl border bg-card p-3 text-sm ${
+              className={`rounded-2xl border bg-card p-3.5 text-sm ${
                 r.type === "buyer_question_pending" ? "border-amber-500/50" : "border-border"
               }`}
             >
-              <p className="m-0 text-[10px] uppercase tracking-wide text-muted">
+              <p className="m-0 text-[10px] font-semibold uppercase tracking-wide text-muted">
                 {r.type === "buyer_question_pending" ? "awaiting your reply" : r.type}
               </p>
               <p className="mt-1 mb-0 font-semibold text-text">{r.title}</p>
@@ -272,39 +367,19 @@ export default function LeadsCrmPage() {
         </div>
       ) : null}
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {[
-          ["all", "All leads"],
-          ["action", "Needs action"],
-          ["reveal", "Contact unlocks"],
-          ["wa", "WhatsApp"],
-          ["inquiry", "Inquiries"],
-          ["rfq", "RFQ invites"],
-        ].map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setTab(id)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-              tab === id ? "border-gold bg-gold/15 text-text" : "border-border text-muted"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
       {error ? <p className="mb-3 text-sm text-danger">{error}</p> : null}
       {loading ? (
-        <p className="text-muted">Loading…</p>
+        <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted">Loading leads…</div>
       ) : unified.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
-          <p className="m-0 text-sm font-semibold text-text">No leads yet</p>
+        <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center">
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-gold-muted text-gold">
+            <Users size={22} aria-hidden />
+          </span>
+          <p className="mt-4 mb-0 text-base font-semibold text-text">No leads yet</p>
           <p className="mt-2 mb-0 text-sm text-muted">
-            Publish products, share your storefront, and wait for buyers to unlock contact or send RFQs on
-            the marketplace.
+            Publish products and share your storefront — unlocks and RFQs will land here.
           </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
             <Link href="/dashboard/products" className="btn-outline text-sm">
               Products
             </Link>
@@ -314,25 +389,35 @@ export default function LeadsCrmPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {unified.map((row) => (
-            <article key={row.id} className="rounded-xl border border-border bg-card p-4">
+            <article
+              key={row.id}
+              className="rounded-2xl border border-border bg-card p-4 shadow-[0_10px_28px_-22px_rgba(16,37,28,0.45)] transition hover:border-gold/25"
+            >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-border bg-surface px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
                       {row.channel}
                     </span>
                     {row.ref ? <span className="text-[10px] text-muted">#{row.ref}</span> : null}
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold capitalize ${
+                        STAGE_TONE[row.stage] || "border-border text-muted"
+                      }`}
+                    >
+                      {String(row.stage).replace(/_/g, " ")}
+                    </span>
                   </div>
-                  <p className="m-0 font-medium text-text">{row.title}</p>
-                  <p className="mt-0.5 mb-0 text-xs text-muted">
+                  <p className="m-0 text-[15px] font-semibold text-text">{row.title}</p>
+                  <p className="mt-1 mb-0 text-xs text-muted">
                     {row.buyer} · {row.at ? formatDate(row.at) : "—"}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <select
-                    className="rounded-lg border border-border bg-bg px-2 py-1 text-xs"
+                    className="rounded-xl border border-border bg-bg px-2.5 py-1.5 text-xs font-medium"
                     value={CRM_STAGES.includes(row.stage) ? row.stage : mapCrmStage(row.stage)}
                     onChange={(e) => saveStage(row.id, e.target.value)}
                   >
@@ -345,7 +430,7 @@ export default function LeadsCrmPage() {
                   <StatusBadge value={row.stage} />
                   <button
                     type="button"
-                    className="text-xs font-semibold text-muted"
+                    className="rounded-lg px-2 py-1 text-xs font-semibold text-muted hover:bg-surface hover:text-text"
                     onClick={() => setExpanded(expanded === row.id ? "" : row.id)}
                   >
                     {expanded === row.id ? "Hide" : "Notes"}
@@ -353,9 +438,12 @@ export default function LeadsCrmPage() {
                 </div>
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-3">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {row.kind === "rfq" && row.href ? (
-                  <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-semibold text-gold">
+                  <Link
+                    href={row.href}
+                    className="inline-flex items-center gap-1 rounded-full border border-gold/25 bg-gold-muted px-3 py-1 text-xs font-semibold text-gold"
+                  >
                     Open RFQ <ExternalLink size={12} />
                   </Link>
                 ) : null}
@@ -364,7 +452,7 @@ export default function LeadsCrmPage() {
                     type="button"
                     disabled={busy === String(row.raw._id)}
                     onClick={() => void markInquiry(row.raw._id, "replied")}
-                    className="text-xs font-semibold text-gold disabled:opacity-50"
+                    className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-text disabled:opacity-50"
                   >
                     Mark replied
                   </button>
@@ -372,15 +460,20 @@ export default function LeadsCrmPage() {
                 {row.phone ? (
                   <a
                     href={`https://wa.me/${String(row.phone).replace(/\D/g, "")}`}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-gold"
+                    className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-800"
                     target="_blank"
                     rel="noreferrer"
                   >
                     <MessageCircle size={12} /> WhatsApp
                   </a>
                 ) : null}
-                {row.email && !String(row.email).includes("@hukum-ksa.com") && !String(row.email).includes("@kingdomtrade.demo") ? (
-                  <a href={`mailto:${row.email}`} className="text-xs font-semibold text-muted">
+                {row.email &&
+                !String(row.email).includes("@hukum-ksa.com") &&
+                !String(row.email).includes("@kingdomtrade.demo") ? (
+                  <a
+                    href={`mailto:${row.email}`}
+                    className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted"
+                  >
                     Email
                   </a>
                 ) : null}
@@ -398,7 +491,7 @@ export default function LeadsCrmPage() {
                   />
                 </label>
               ) : notes[row.id] ? (
-                <p className="mt-2 mb-0 text-xs text-muted">{notes[row.id]}</p>
+                <p className="mt-2 mb-0 rounded-xl bg-surface px-3 py-2 text-xs text-muted">{notes[row.id]}</p>
               ) : null}
             </article>
           ))}

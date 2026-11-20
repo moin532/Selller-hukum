@@ -360,7 +360,7 @@ export default function ProductsPage() {
       ) : visible.length === 0 ? (
         <EmptyState title="No products" body={`Total from API: ${total}. Create a draft to get started.`} />
       ) : view === "cards" ? (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {visible.map((p) => (
             <ProductCatalogCard
               key={String(p._id)}
@@ -414,11 +414,15 @@ export default function ProductsPage() {
                     </td>
                     <td>
                       <div className="flex items-center gap-3">
-                        <span className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#f0eeea]">
+                        <span className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-[#ebe8e2]">
                           {thumb ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={thumb} alt="" className="h-full w-full object-contain" />
-                          ) : null}
+                            <img src={thumb} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center text-[9px] text-muted">
+                              —
+                            </span>
+                          )}
                         </span>
                         <strong>{productTitle(p)}</strong>
                       </div>

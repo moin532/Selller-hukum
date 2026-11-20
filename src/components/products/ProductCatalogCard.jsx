@@ -1,12 +1,13 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Package } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatDate } from "@/lib/utils";
 import {
   formatProductPrice,
-  productPrimaryImage,
+  productMediaList,
   productTitle,
   productTitleSecondary,
 } from "@/lib/product-display";
@@ -23,6 +24,37 @@ export function productActionFlags(status) {
   };
 }
 
+function ProductThumb({ product, title }) {
+  const urls = useMemo(
+    () => productMediaList(product).map((m) => m.url).filter(Boolean),
+    [product]
+  );
+  const [index, setIndex] = useState(0);
+  const src = urls[index] || "";
+
+  if (!src) {
+    return (
+      <span className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-[#f3f1ec] text-muted">
+        <Package size={26} strokeWidth={1.5} />
+        <span className="text-[11px] font-medium">No image</span>
+      </span>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={title || ""}
+      className="h-full w-full object-cover"
+      loading="lazy"
+      onError={() => {
+        setIndex((i) => (i + 1 < urls.length ? i + 1 : urls.length));
+      }}
+    />
+  );
+}
+
 export function ProductCatalogCard({
   product,
   busy = false,
@@ -35,21 +67,21 @@ export function ProductCatalogCard({
   onDelete,
 }) {
   const id = String(product._id);
-  const image = productPrimaryImage(product);
   const price = formatProductPrice(product);
   const title = productTitle(product);
   const secondary = productTitleSecondary(product);
   const { canSubmit, canUnpublish, canDelete } = productActionFlags(product.status);
   const showDelete = canDelete && (selected || canSubmit || product.status === "submitted");
+  const mediaCount = productMediaList(product).length;
 
   return (
     <article
-      className={`relative flex flex-col overflow-hidden rounded-xl border bg-card transition hover:border-gold/50 ${
+      className={`relative flex h-full flex-col overflow-hidden rounded-xl border bg-card transition hover:border-gold/45 ${
         selected ? "border-gold ring-1 ring-gold/40" : "border-border"
       }`}
     >
       {onSelect ? (
-        <label className="absolute start-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-border bg-card/95">
+        <label className="absolute start-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-border bg-card/95 shadow-sm">
           <input
             type="checkbox"
             checked={selected}
@@ -58,58 +90,56 @@ export function ProductCatalogCard({
           />
         </label>
       ) : null}
+
       <Link
         href={`/dashboard/products/${id}`}
-        className="relative block aspect-[5/4] bg-[#f0eeea]"
+        className="relative block aspect-[4/3] shrink-0 overflow-hidden bg-[#ebe8e2]"
       >
-        {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt="" className="h-full w-full object-contain p-3" />
-        ) : (
-          <span className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted">
-            <Package size={28} strokeWidth={1.5} />
-            <span className="text-xs">No image</span>
-          </span>
-        )}
+        <ProductThumb product={product} title={title} />
         <span className={`absolute top-2 ${onSelect ? "end-2" : "start-2"}`}>
           <StatusBadge value={product.status} />
         </span>
-        <span className="absolute bottom-2 end-2 rounded-full bg-[#1a1612]/85 px-2.5 py-1 text-[11px] font-semibold text-white">
+        <span className="absolute bottom-2 end-2 rounded-full bg-[#1a1612]/88 px-2.5 py-1 text-[11px] font-semibold text-white">
           {price.label}
         </span>
+        {mediaCount > 1 ? (
+          <span className="absolute bottom-2 start-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white">
+            {mediaCount} photos
+          </span>
+        ) : null}
       </Link>
 
-      <div className="flex flex-1 flex-col gap-2 p-3.5">
+      <div className="flex flex-col gap-2.5 p-3">
         <div className="min-w-0">
           <Link
             href={`/dashboard/products/${id}`}
-            className="line-clamp-2 text-sm font-semibold text-text hover:text-gold"
+            className="line-clamp-2 text-[13px] font-semibold leading-snug text-text hover:text-gold"
           >
             {title}
           </Link>
           {secondary ? (
-            <p className="m-0 mt-0.5 line-clamp-1 text-xs text-muted" dir="rtl">
+            <p className="m-0 mt-0.5 line-clamp-1 text-[11px] text-muted" dir="rtl">
               {secondary}
             </p>
           ) : null}
-          <p className="m-0 mt-1 text-[11px] text-muted">
+          <p className="m-0 mt-1 text-[11px] leading-snug text-muted">
             {[product.brand, product.sku].filter(Boolean).join(" · ") || "No SKU"}
             {" · "}
             {formatDate(product.updatedAt)}
           </p>
         </div>
 
-        <div className="mt-auto grid grid-cols-2 gap-2 border-t border-border pt-3">
-          <Link href={`/dashboard/products/${id}`} className="btn-outline justify-center text-center text-xs">
+        <div className="grid grid-cols-2 gap-1.5 border-t border-border pt-2.5">
+          <Link href={`/dashboard/products/${id}`} className="btn-outline justify-center !px-2 !py-1.5 text-center text-xs">
             View
           </Link>
-          <Link href={`/dashboard/products/${id}/edit`} className="btn-outline justify-center text-center text-xs">
+          <Link href={`/dashboard/products/${id}/edit`} className="btn-outline justify-center !px-2 !py-1.5 text-center text-xs">
             Edit
           </Link>
           {canSubmit ? (
             <button
               type="button"
-              className="btn-primary col-span-2 justify-center text-xs"
+              className="btn-primary col-span-2 justify-center !py-1.5 text-xs"
               disabled={busy || !verified}
               title={!verified ? lockTitle : "Submit for Super Admin approval"}
               onClick={() => onSubmit?.(id)}
@@ -120,7 +150,7 @@ export function ProductCatalogCard({
           {canUnpublish ? (
             <button
               type="button"
-              className="btn-outline col-span-2 justify-center text-xs"
+              className="btn-outline col-span-2 justify-center !py-1.5 text-xs"
               disabled={busy}
               title="Remove from public catalog (back to draft)"
               onClick={() => onUnpublish?.(id)}
@@ -131,9 +161,7 @@ export function ProductCatalogCard({
           {showDelete ? (
             <button
               type="button"
-              className={`rounded-lg border border-danger/50 bg-danger/10 px-2.5 py-1.5 text-xs font-semibold text-danger hover:bg-danger/20 disabled:opacity-50 ${
-                canSubmit || canUnpublish ? "col-span-2" : "col-span-2"
-              }`}
+              className="col-span-2 rounded-lg border border-danger/50 bg-danger/10 px-2.5 py-1.5 text-xs font-semibold text-danger hover:bg-danger/20 disabled:opacity-50"
               disabled={busy}
               title="Permanently delete this product"
               onClick={() => onDelete?.(id)}

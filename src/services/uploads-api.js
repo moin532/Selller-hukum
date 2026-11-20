@@ -91,10 +91,16 @@ export function firstUploadedFile(data) {
  */
 export function mediaAbsoluteUrl(pathOrUrl) {
   if (!pathOrUrl) return "";
-  if (/^blob:|^data:/i.test(pathOrUrl)) return pathOrUrl;
-  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  if (typeof pathOrUrl === "object") {
+    const nested = pathOrUrl.url || pathOrUrl.src || pathOrUrl.path || "";
+    return nested ? mediaAbsoluteUrl(String(nested)) : "";
+  }
+  const raw = String(pathOrUrl).trim();
+  if (!raw || raw === "[object Object]") return "";
+  if (/^blob:|^data:/i.test(raw)) return raw;
+  if (/^https?:\/\//i.test(raw)) return raw;
 
-  const path = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
+  const path = raw.startsWith("/") ? raw : `/${raw}`;
 
   // Browser: same-origin for API media (seller.hukum-ksa.com or localhost → proxy)
   if (typeof window !== "undefined" && (path.startsWith("/api/media") || path.startsWith("/api/"))) {
